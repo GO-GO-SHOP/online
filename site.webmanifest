@@ -1,0 +1,22 @@
+{
+  "name": "GO GO SHOP",
+  "short_name": "GO GO SHOP",
+  "description": "GO GO SHOP online store",
+  "start_url": "./?source=installed-app",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0b191a",
+  "icons": [
+    {
+      "src": "assets/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

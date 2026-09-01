@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "nz.gogoshop.app",
+      "sha256_cert_fingerprints": [
+        "69:3B:E3:DE:3E:AE:35:BF:4F:61:9F:07:B7:82:8D:C7:32:AA:D9:3D:66:3F:11:29:A7:67:42:9E:4E:E1:A8:DE"
+      ]
+    }
+  }
+]

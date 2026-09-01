@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Go Go Shop Admin</title>
+  <script>
+    location.replace("./gogoshop.html#admin");
+  </script>
+  <style>
+    :root {
+      --ink: #111111;
+      --muted: #666666;
+      --line: #dddddd;
+      --page: #f5f6f6;
+      --panel: #ffffff;
+      --good: #167044;
+      --bad: #a4241c;
+      --teal: #4f9499;
+      --coral: #cc7967;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--page);
+      color: var(--ink);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .login {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .login-card,
+    .panel,
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .login-card {
+      width: min(100%, 420px);
+      padding: 26px;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      line-height: 1.1;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      font-size: 18px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-top: 14px;
+    }
+
+    .field span {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 82px;
+      padding: 10px 12px;
+      resize: vertical;
+    }
+
+    .button {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--ink);
+      border-radius: 8px;
+      padding: 0 16px;
+      background: var(--ink);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .button.secondary {
+      background: #fff;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .app {
+      display: none;
+      min-height: 100vh;
+      grid-template-columns: 230px 1fr;
+    }
+
+    .sidebar {
+      min-height: 100vh;
+      border-right: 1px solid var(--line);
+      background: #fff;
+      padding: 24px 16px;
+    }
+
+    .brand {
+      margin-bottom: 24px;
+      padding: 0 10px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav button,
+    .nav a {
+      min-height: 42px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 0 12px;
+      background: transparent;
+      color: #343737;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .nav button.active {
+      border-color: var(--line);
+      background: #f1f2f2;
+      color: var(--ink);
+    }
+
+    .main {
+      min-width: 0;
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .metric {
+      padding: 18px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 28px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.75fr) minmax(420px, 1.25fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel-head {
+      display: flex;
+      min-height: 58px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      padding: 0 18px;
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px;
+      text-align: left;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .product-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 190px;
+    }
+
+    .product-cell img {
+      width: 42px;
+      height: 42px;
+      object-fit: cover;
+      background: #eee;
+    }
+
+    .status {
+      display: inline-flex;
+      min-height: 26px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .status.live {
+      background: #e8f5ee;
+      color: var(--good);
+    }
+
+    .status.off {
+      background: #f7eeee;
+      color: var(--bad);
+    }
+
+    .small-btn {
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 10px;
+      background: #fff;
+      font-weight: 700;
+    }
+
+    .tab {
+      display: none;
+    }
+
+    .tab.active {
+      display: block;
+    }
+
+    .bars {
+      display: grid;
+      gap: 14px;
+    }
+
+    .bar {
+      display: grid;
+      grid-template-columns: 110px 1fr 70px;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .track {
+      height: 12px;
+      border-radius: 999px;
+      background: #eceeee;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--coral));
+    }
+
+    .message {
+      display: none;
+      margin-top: 12px;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #111;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    @media (max-width: 920px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        min-height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .nav {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .main {
+        padding: 18px 16px;
+      }
+
+      .metrics,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="login" id="loginScreen">
+    <div class="login-card">
+      <h1>Go Go Shop Admin</h1>
+      <p class="muted">Password: admin123</p>
+      <form id="loginForm" onsubmit="return loginAdmin(event)">
+        <label class="field">
+          <span>Password</span>
+          <input id="password" type="password" value="admin123" autocomplete="current-password">
+        </label>
+        <div class="actions">
+          <button class="button" type="submit">Sign in</button>
+          <a class="button secondary" href="./gogoshop.html">Storefront</a>
+        </div>
+      </form>
+      <div class="message" id="loginMessage"></div>
+    </div>
+  </section>
+
+  <section class="app" id="adminApp">
+    <aside class="sidebar">
+      <div class="brand">Go Go Shop</div>
+      <nav class="nav">
+        <button class="active" type="button" data-tab-button="overview" onclick="showTab('overview')">Overview</button>
+        <button type="button" data-tab-button="products" onclick="showTab('products')">Products</button>
+        <button type="button" data-tab-button="analytics" onclick="showTab('analytics')">Analytics</button>
+        <a href="./gogoshop.html">Store</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 id="pageTitle">Overview</h1>
+          <p class="muted" id="pageSub">Products, inventory, orders and sales signals.</p>
+        </div>
+        <div class="actions" style="margin-top: 0;">
+          <button class="button secondary" type="button" onclick="exportProducts()">Export CSV</button>
+          <button class="button" type="button" onclick="showTab('products')">Add product</button>
+        </div>
+      </div>
+
+      <section class="tab active" id="tab-overview">
+        <div class="metrics" id="metricGrid"></div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Weekly revenue</h2>
+            <span class="muted">NZD</span>
+          </div>
+          <div class="panel-body">
+            <div class="bars" id="revenueBars"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-products">
+        <div class="grid">
+          <div class="panel">
+            <div class="panel-head">
+              <h2 id="formTitle">Add product</h2>
+              <button class="small-btn" type="button" onclick="clearForm()">Clear</button>
+            </div>
+            <div class="panel-body">
+              <form id="productForm" onsubmit="return saveProduct(event)">
+                <input type="hidden" id="productId">
+                <label class="field">
+                  <span>Product name</span>
+                  <input id="title" required>
+                </label>
+                <div class="row">
+                  <label class="field">
+                    <span>Category</span>
+                    <select id="category">
+                      <option>Blind Box</option>
+                      <option>Phone Case</option>
+                      <option>Key Chain</option>
+                      <option>Soft Toy</option>
+                      <option>Smart Glasses</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Price NZD</span>
+                    <input id="price" type="number" min="0" step="0.01" required>
+                  </label>
+                </div>
+                <div class="row">
+                  <label class="field">
+                    <span>Stock</span>
+                    <input id="stock" type="number" min="0" step="1" required>
+                  </label>
+                  <label class="field">
+                    <span>Image URL</span>
+                    <input id="image" type="url" required>
+                  </label>
+                </div>
+                <label class="field">
+                  <span>Description</span>
+                  <textarea id="description"></textarea>
+                </label>
+                <label class="field">
+                  <span>Published</span>
+                  <select id="published">
+                    <option value="true">Published</option>
+                    <option value="false">Hidden</option>
+                  </select>
+                </label>
+                <div class="actions">
+                  <button class="button" type="submit">Save product</button>
+                  <button class="button secondary" type="button" onclick="resetProducts()">Reset products</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Products</h2>
+              <span class="muted" id="productCount"></span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="productRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-analytics">
+        <div class="metrics" id="analyticsMetrics"></div>
+        <div class="grid">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Top products</h2>
+            </div>
+            <div class="panel-body">
+              <div class="bars" id="topProductBars"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Recent orders</h2>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Total</th>
+                    <th>Items</th>
+                  </tr>
+                </thead>
+                <tbody id="orderRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <script>
+    var STORAGE_KEY = "gogoshop_products_v1";
+    var ORDER_KEY = "gogoshop_orders_v1";
+    var ADMIN_KEY = "gogoshop_admin_unlocked_v1";
+    var memoryStore = {};
+
+    var seedProducts = [
+      { id: "blind-box", title: "Blind Box", category: "Blind Box", description: "", price: 12.99, stock: 0, published: true, sales: 31, views: 342, image: "https://cdn.shopify.com/s/files/1/0608/4165/6384/files/rn-image_picker_lib_temp_09c2f614-fcfa-4def-8c6e-9490a07a8a62.jpg?v=1782510734" },
+      { id: "blind-box-1", title: "Blind Box", category: "Blind Box", description: "Twinkle Twinkle (Star Baby) Christmas Family", price: 12.99, stock: 0, published: true, sales: 24, views: 289, image: "https://cdn.shopify.com/s/files/1/0608/4165/6384/files/rn-image_picker_lib_temp_d0974c4b-368f-4096-85a8-3bb1b776cd0c.jpg?v=1782511848" },
+      { id: "key-chain", title: "Key Chain", category: "Key Chain", description: "", price: 9.99, stock: 0, published: true, sales: 18, views: 205, image: "https://cdn.shopify.com/s/files/1/0608/4165/6384/files/rn-image_picker_lib_temp_ba75def8-8bc5-44f2-9c69-645934bef2ce.jpg?v=1782590358" },
+      { id: "phone-case-3", title: "Phone Case", category: "Phone Case", description: "", price: 4.99, stock: 44, published: true, sales: 52, views: 471, image: "https://cdn.shopify.com/s/files/1/0608/4165/6384/files/rn-image_picker_lib_temp_80a58ee6-430b-469b-859b-0c3c0cf590c9.jpg?v=1782417831" },
+      { id: "phone-case-2", title: "Phone Case", category: "Phone Case", description: "Coming Soon", price: 9.99, stock: 20, published: true, sales: 29, views: 251, image: "https://cdn.shopify.com/s/files/1/0608/4165/6384/files/rn-image_picker_lib_temp_a3f30fc5-e47f-47f6-a44a-419da0ea324b.jpg?v=1782330848" },
+      { id: "phone-case-1", title: "Phone Case", category: "Phone Case", description: "Coming Soon", price: 4.99, stock: 35, published: true, sales: 43, views: 390, image: "https://cdn.shopify.com/s/files/1/0608/4165/6384/files/rn-image_picker_lib_temp_8bd7825f-57c3-4985-89a7-30f6d190bb4b.jpg?v=1782330572" },
+      { id: "phone-case", title: "Phone Case", category: "Phone Case", description: "Coming Soon", price: 4.99, stock: 22, published: true, sales: 37, views: 314, image: "https://cdn.shopify.com/s/files/1/0608/4165/6384/files/rn-image_picker_lib_temp_8a4056c7-90f8-4af5-b387-da8dfdcdbc94.jpg?v=1782330561" },
+      { id: "smart-glasses", title: "Smart Glasses", category: "Smart Glasses", description: "", price: 14.99, stock: 13, published: true, sales: 11, views: 188, image: "https://cdn.shopify.com/s/files/1/0608/4165/6384/files/rn-image_picker_lib_temp_3b0c0439-9771-408f-85ad-c70f8fef0b26.jpg?v=1782417962" },
+      { id: "soft-toy", title: "Soft Toy", category: "Soft Toy", description: "", price: 14.99, stock: 0, published: true, sales: 15, views: 202, image: "https://cdn.shopify.com/s/files/1/0608/4165/6384/files/rn-image_picker_lib_temp_496117a2-313a-41e5-940c-26a4324a739e.jpg?v=1782590358" }
+    ];
+
+    var seedOrders = [
+      { id: "GGS-1048", date: "Mon", total: 64.92, items: 5 },
+      { id: "GGS-1049", date: "Tue", total: 42.94, items: 4 },
+      { id: "GGS-1050", date: "Wed", total: 91.86, items: 7 },
+      { id: "GGS-1051", date: "Thu", total: 36.97, items: 3 },
+      { id: "GGS-1052", date: "Fri", total: 108.84, items: 9 },
+      { id: "GGS-1053", date: "Sat", total: 79.90, items: 6 },
+      { id: "GGS-1054", date: "Sun", total: 54.93, items: 5 }
+    ];
+
+    var products = load(STORAGE_KEY, seedProducts);
+    var orders = load(ORDER_KEY, seedOrders);
+
+    function byId(id) {
+      return document.getElementById(id);
+    }
+
+    function copy(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function getStore(key) {
+      try {
+        var value = localStorage.getItem(key);
+        return value || memoryStore[key] || null;
+      } catch (error) {
+        return memoryStore[key] || null;
+      }
+    }
+
+    function setStore(key, value) {
+      memoryStore[key] = value;
+      try {
+        localStorage.setItem(key, value);
+      } catch (error) {}
+    }
+
+    function load(key, fallback) {
+      try {
+        var value = getStore(key);
+        return value ? JSON.parse(value) : copy(fallback);
+      } catch (error) {
+        return copy(fallback);
+      }
+    }
+
+    function saveProducts() {
+      setStore(STORAGE_KEY, JSON.stringify(products));
+    }
+
+    function money(value) {
+      return "$" + Number(value || 0).toFixed(2);
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, function(char) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
+      });
+    }
+
+    function loginAdmin(event) {
+      if (event) event.preventDefault();
+      if (byId("password").value === "admin123") {
+        setStore(ADMIN_KEY, "true");
+        showApp();
+      } else {
+        byId("loginMessage").innerHTML = "Wrong password. Use admin123.";
+        byId("loginMessage").className = "message show";
+      }
+      return false;
+    }
+
+    function showApp() {
+      byId("loginScreen").style.display = "none";
+      byId("adminApp").style.display = "grid";
+      renderAll();
+    }
+
+    function showTab(name) {
+      var tabs = document.querySelectorAll(".tab");
+      var buttons = document.querySelectorAll("[data-tab-button]");
+      var i;
+      for (i = 0; i < tabs.length; i += 1) tabs[i].className = tabs[i].id === "tab-" + name ? "tab active" : "tab";
+      for (i = 0; i < buttons.length; i += 1) buttons[i].className = buttons[i].getAttribute("data-tab-button") === name ? "active" : "";
+      byId("pageTitle").innerHTML = name.charAt(0).toUpperCase() + name.slice(1);
+      byId("pageSub").innerHTML = name === "products" ? "Add, edit and publish products." : name === "analytics" ? "Revenue, orders and product performance." : "Products, inventory, orders and sales signals.";
+      renderAll();
+    }
+
+    function metricsHtml(extra) {
+      var revenue = 0;
+      var units = 0;
+      var views = 0;
+      var stock = 0;
+      var live = 0;
+      var i;
+      for (i = 0; i < orders.length; i += 1) revenue += Number(orders[i].total || 0);
+      for (i = 0; i < products.length; i += 1) {
+        units += Number(products[i].sales || 0);
+        views += Number(products[i].views || 0);
+        stock += Number(products[i].stock || 0);
+        if (products[i].published) live += 1;
+      }
+      var conversion = views ? ((units / views) * 100).toFixed(1) + "%" : "0%";
+      var rows = [
+        ["Revenue", money(revenue)],
+        ["Orders", orders.length],
+        ["Units sold", units],
+        [extra ? "Conversion" : "Products", extra ? conversion : live]
+      ];
+      if (extra) rows.push(["Inventory", stock]);
+      var html = "";
+      for (i = 0; i < rows.length; i += 1) {
+        html += '<div class="metric"><span>' + rows[i][0] + '</span><strong>' + rows[i][1] + '</strong></div>';
+      }
+      return html;
+    }
+
+    function renderMetrics() {
+      byId("metricGrid").innerHTML = metricsHtml(false);
+      byId("analyticsMetrics").innerHTML = metricsHtml(true);
+    }
+
+    function renderRevenue() {
+      var recent = orders.slice(Math.max(0, orders.length - 7));
+      var max = 1;
+      var i;
+      for (i = 0; i < recent.length; i += 1) if (Number(recent[i].total) > max) max = Number(recent[i].total);
+      var html = "";
+      for (i = 0; i < recent.length; i += 1) {
+        html += '<div class="bar"><span>' + escapeHtml(recent[i].date) + '</span><div class="track"><div class="fill" style="width:' + (Number(recent[i].total) / max * 100) + '%"></div></div><strong>' + Math.round(recent[i].total) + '</strong></div>';
+      }
+      byId("revenueBars").innerHTML = html;
+    }
+
+    function renderProducts() {
+      byId("productCount").innerHTML = products.length + " items";
+      var html = "";
+      var i;
+      for (i = 0; i < products.length; i += 1) {
+        var product = products[i];
+        var live = product.published && Number(product.stock) > 0;
+        html += '<tr><td><div class="product-cell"><img src="' + escapeHtml(product.image) + '" alt=""><div><strong>' + escapeHtml(product.title) + '</strong><div class="muted">' + escapeHtml(product.category) + '</div></div></div></td><td>' + money(product.price) + '</td><td>' + product.stock + '</td><td><span class="status ' + (live ? "live" : "off") + '">' + (live ? "Live" : "Sold out") + '</span></td><td><button class="small-btn" type="button" onclick="editProduct(&quot;' + escapeHtml(product.id) + '&quot;)">Edit</button> <button class="small-btn" type="button" onclick="deleteProduct(&quot;' + escapeHtml(product.id) + '&quot;)">Delete</button></td></tr>';
+      }
+      byId("productRows").innerHTML = html;
+    }
+
+    function renderTopProducts() {
+      var list = products.slice().sort(function(a, b) {
+        return Number(b.sales || 0) - Number(a.sales || 0);
+      }).slice(0, 7);
+      var max = 1;
+      var i;
+      for (i = 0; i < list.length; i += 1) if (Number(list[i].sales || 0) > max) max = Number(list[i].sales || 0);
+      var html = "";
+      for (i = 0; i < list.length; i += 1) {
+        html += '<div class="bar"><span>' + escapeHtml(list[i].title) + '</span><div class="track"><div class="fill" style="width:' + (Number(list[i].sales || 0) / max * 100) + '%"></div></div><strong>' + Number(list[i].sales || 0) + '</strong></div>';
+      }
+      byId("topProductBars").innerHTML = html;
+    }
+
+    function renderOrders() {
+      var html = "";
+      var start = Math.max(0, orders.length - 8);
+      var i;
+      for (i = orders.length - 1; i >= start; i -= 1) {
+        html += '<tr><td><strong>' + escapeHtml(orders[i].id) + '</strong><div class="muted">' + escapeHtml(orders[i].date) + '</div></td><td>' + money(orders[i].total) + '</td><td>' + orders[i].items + '</td></tr>';
+      }
+      byId("orderRows").innerHTML = html;
+    }
+
+    function clearForm() {
+      byId("productId").value = "";
+      byId("title").value = "";
+      byId("category").value = "Blind Box";
+      byId("price").value = "";
+      byId("stock").value = "";
+      byId("image").value = "";
+      byId("description").value = "";
+      byId("published").value = "true";
+      byId("formTitle").innerHTML = "Add product";
+    }
+
+    function editProduct(id) {
+      var product = findProduct(id);
+      if (!product) return;
+      showTab("products");
+      byId("productId").value = product.id;
+      byId("title").value = product.title;
+      byId("category").value = product.category;
+      byId("price").value = product.price;
+      byId("stock").value = product.stock;
+      byId("image").value = product.image;
+      byId("description").value = product.description || "";
+      byId("published").value = product.published ? "true" : "false";
+      byId("formTitle").innerHTML = "Edit product";
+    }
+
+    function findProduct(id) {
+      var i;
+      for (i = 0; i < products.length; i += 1) if (products[i].id === id) return products[i];
+      return null;
+    }
+
+    function saveProduct(event) {
+      if (event) event.preventDefault();
+      var id = byId("productId").value;
+      if (!id) id = byId("title").value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + new Date().getTime();
+      var existing = findProduct(id);
+      var product = {
+        id: id,
+        title: byId("title").value,
+        category: byId("category").value,
+        description: byId("description").value,
+        price: Number(byId("price").value),
+        stock: Number(byId("stock").value),
+        published: byId("published").value === "true",
+        image: byId("image").value,
+        sales: existing ? Number(existing.sales || 0) : 0,
+        views: existing ? Number(existing.views || 0) : 0
+      };
+      if (existing) {
+        for (var key in product) existing[key] = product[key];
+      } else {
+        products.unshift(product);
+      }
+      saveProducts();
+      clearForm();
+      renderAll();
+      return false;
+    }
+
+    function deleteProduct(id) {
+      var next = [];
+      var i;
+      for (i = 0; i < products.length; i += 1) if (products[i].id !== id) next.push(products[i]);
+      products = next;
+      saveProducts();
+      renderAll();
+    }
+
+    function resetProducts() {
+      products = copy(seedProducts);
+      saveProducts();
+      clearForm();
+      renderAll();
+    }
+
+    function exportProducts() {
+      var headers = ["id", "title", "category", "price", "stock", "published", "image"];
+      var lines = [headers.join(",")];
+      var i;
+      for (i = 0; i < products.length; i += 1) {
+        lines.push(headers.map(function(key) {
+          return '"' + String(products[i][key] || "").replace(/"/g, '""') + '"';
+        }).join(","));
+      }
+      var blob = new Blob([lines.join("\n")], { type: "text/csv" });
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement("a");
+      link.href = url;
+      link.download = "gogoshop-products.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function renderAll() {
+      renderMetrics();
+      renderRevenue();
+      renderProducts();
+      renderTopProducts();
+      renderOrders();
+    }
+
+    if (getStore(ADMIN_KEY) === "true") {
+      showApp();
+    }
+  </script>
+</body>
+</html>

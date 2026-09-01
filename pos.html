@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GO GO SHOP POS</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="store-config.js"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#171918;background:#f3f5f4;--green:#176b4d;--red:#b33a32;--line:#d9dedb;--muted:#68716c;--panel:#fff}*{box-sizing:border-box}body{margin:0;min-width:320px}button,input{font:inherit}button{cursor:pointer}.hidden{display:none!important}.topbar{height:64px;background:#171918;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px}.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:19px}.top-actions{display:flex;gap:8px;align-items:center}.icon-btn,.secondary,.primary{border:1px solid var(--line);background:#fff;border-radius:6px;min-height:42px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;gap:8px}.topbar .icon-btn{color:#fff;border-color:#454947;background:transparent}.primary{background:var(--green);border-color:var(--green);color:#fff;font-weight:800}.primary:disabled{opacity:.45;cursor:not-allowed}.login{min-height:100vh;display:grid;place-items:center;padding:24px}.login-panel{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:8px;padding:28px}.login-panel h1{margin:0 0 8px}.field{display:grid;gap:7px;margin-top:18px;font-weight:700}.field input,.scan-input{width:100%;height:52px;border:2px solid #aeb7b2;border-radius:6px;padding:0 15px;background:#fff}.field input:focus,.scan-input:focus{outline:3px solid #bfe4d5;border-color:var(--green)}.login-panel .primary{width:100%;margin-top:14px}.message{min-height:22px;color:var(--red);margin:12px 0 0}.app{min-height:100vh}.workspace{display:grid;grid-template-columns:minmax(0,1fr) 380px;min-height:calc(100vh - 64px)}.catalog{padding:24px;overflow:auto}.scan-wrap{background:#fff;border:1px solid var(--line);padding:18px;border-radius:8px}.scan-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.scan-label strong{font-size:18px}.hint{font-size:13px;color:var(--muted)}.scan-row{display:grid;grid-template-columns:1fr auto;gap:10px}.status{min-height:24px;margin:9px 0 0;font-size:14px;color:var(--muted)}.status.error{color:var(--red)}.status.success{color:var(--green)}.cart-head{display:flex;align-items:end;justify-content:space-between;margin:24px 0 10px}.cart-head h2{margin:0;font-size:20px}.cart-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line)}.cart-table th,.cart-table td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}.cart-table th{font-size:12px;color:var(--muted);text-transform:uppercase;background:#fafbfa}.product-cell{display:flex;align-items:center;gap:12px;min-width:230px}.thumb{width:54px;height:54px;object-fit:cover;background:#eef1ef;border-radius:4px}.product-meta strong,.product-meta span{display:block}.product-meta span{font-size:12px;color:var(--muted);margin-top:4px}.qty{display:grid;grid-template-columns:36px 54px 36px;height:38px}.qty button,.qty input{border:1px solid var(--line);background:#fff;text-align:center}.qty button:first-child{border-radius:5px 0 0 5px}.qty button:last-child{border-radius:0 5px 5px 0}.qty input{border-left:0;border-right:0;width:54px}.remove{border:0;background:transparent;color:var(--red);padding:8px}.empty{background:#fff;border:1px dashed #bfc7c2;padding:54px 20px;text-align:center;color:var(--muted)}.summary{background:#fff;border-left:1px solid var(--line);padding:24px;display:flex;flex-direction:column;position:sticky;top:0;height:calc(100vh - 64px)}.summary h2{margin:0 0 20px}.totals{display:grid;gap:14px}.total-row{display:flex;justify-content:space-between;color:var(--muted)}.grand{border-top:1px solid var(--line);padding-top:18px;color:#171918;font-size:26px;font-weight:900}.complete{width:100%;min-height:58px;font-size:18px;margin-top:auto}.summary-note{font-size:13px;color:var(--muted);line-height:1.5;margin:14px 0}.print-controls{display:grid;gap:10px;margin-top:14px}.auto-print{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700}.auto-print input{width:18px;height:18px;accent-color:var(--green)}.last-order{border:1px solid #a8d2c0;background:#edf8f3;border-radius:6px;padding:14px;margin-top:18px;color:#12563e}.last-order strong,.last-order span{display:block}.last-order span{font-size:13px;margin-top:5px}.receipt-print{display:none}.loading{position:fixed;inset:0;background:rgba(255,255,255,.82);display:grid;place-items:center;z-index:5;font-weight:800}.loading i{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:850px){.workspace{grid-template-columns:1fr}.summary{position:static;height:auto;border-left:0;border-top:1px solid var(--line)}.complete{margin-top:22px}.cart-table thead{display:none}.cart-table,.cart-table tbody,.cart-table tr,.cart-table td{display:block}.cart-table tr{padding:12px;border-bottom:1px solid var(--line)}.cart-table td{border:0;padding:6px}.topbar{padding:0 14px}.catalog{padding:14px}.brand span{display:none}.top-actions{gap:4px}.topbar .icon-btn{padding:0 9px}.scan-input{font-size:16px}.summary{padding:18px 14px}}@page{size:58mm auto;margin:2mm}@media print{html,body{width:58mm!important;min-width:0!important;margin:0!important;padding:0!important;background:#fff!important}.login,.app,.loading{display:none!important}.receipt-print{display:block!important;width:54mm;padding:1mm;color:#000;font-family:Arial,"Microsoft YaHei",sans-serif;font-size:10px;line-height:1.35}.receipt-head{text-align:center;border-bottom:1px dashed #000;padding-bottom:6px}.receipt-head strong{display:block;font-size:15px}.receipt-meta{display:grid;gap:2px;padding:6px 0;border-bottom:1px dashed #000}.receipt-line{padding:5px 0;border-bottom:1px dotted #777}.receipt-line strong,.receipt-line span{display:block}.receipt-line span{text-align:right}.receipt-total{display:flex;justify-content:space-between;font-size:14px;font-weight:800;padding:8px 0;border-bottom:1px dashed #000}.receipt-tax{display:grid;gap:2px;padding:6px 0;border-bottom:1px dashed #000}.receipt-tax span{display:flex;justify-content:space-between}.receipt-policy{padding:7px 0;border-bottom:1px dashed #000;text-align:left}.receipt-policy strong{display:block;margin-bottom:3px}.receipt-footer{text-align:center;padding-top:8px}}
+  </style>
+  <style>
+    .selected-customer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-top: 1px solid #c9ddd3;
+      margin-top: 10px;
+      padding-top: 9px;
+      color: #12563e;
+    }
+
+    .selected-customer strong,
+    .selected-customer span {
+      display: block;
+    }
+
+    .selected-customer span {
+      margin-top: 3px;
+      color: #527368;
+      font-size: 12px;
+    }
+
+    .selected-customer button {
+      flex: 0 0 auto;
+      border: 0;
+      background: transparent;
+      color: #176b4d;
+      font-weight: 800;
+    }
+
+    .voucher-panel { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 12px; }
+    .voucher-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+    .voucher-head span { color:var(--muted); font-size:12px; }
+    .voucher-list { display:grid; gap:7px; }
+    .voucher-option { display:grid; grid-template-columns:20px 1fr auto; align-items:center; gap:9px; border:1px solid var(--line); border-radius:6px; padding:10px; cursor:pointer; }
+    .voucher-option:has(input:checked) { border-color:var(--green); background:#edf8f3; }
+    .voucher-option input { width:17px; height:17px; accent-color:var(--green); }
+    .voucher-option strong,.voucher-option span { display:block; }
+    .voucher-option span { color:var(--muted); font-size:12px; margin-top:2px; }
+    .voucher-option b { color:var(--green); white-space:nowrap; }
+    .discount-row { color:var(--green); }
+    .line-price-editor { display:flex; width:132px; align-items:center; gap:5px; }
+    .line-price-field { display:grid; min-width:0; flex:1; grid-template-columns:24px minmax(0,1fr); align-items:center; overflow:hidden; border:1px solid var(--line); border-radius:5px; background:#fff; }
+    .line-price-field:focus-within { border-color:var(--green); box-shadow:0 0 0 2px #cce8dc; }
+    .line-price-field span { color:var(--muted); text-align:right; }
+    .line-price-field input { width:100%; min-width:0; height:36px; border:0; outline:0; padding:0 6px; background:transparent; font-variant-numeric:tabular-nums; }
+    .line-price-reset { width:34px; height:36px; flex:0 0 34px; border:1px solid var(--line); border-radius:5px; background:#fff; color:var(--green); display:grid; place-items:center; padding:0; }
+    .line-price-reset svg { width:16px; height:16px; }
+    .line-price-original { display:block; margin-top:4px; color:var(--muted); font-size:11px; white-space:nowrap; }
+    .line-price-discounted { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-top:5px; color:var(--green); font-size:11px; white-space:nowrap; }
+    .line-price-discounted strong { font-size:12px; font-variant-numeric:tabular-nums; }
+    .manual-discount-panel { margin:0 0 18px; padding:12px; border:1px solid var(--line); border-radius:6px; background:#fafbfa; }
+    .manual-discount-head { display:flex; min-height:30px; align-items:center; justify-content:space-between; gap:8px; }
+    .manual-discount-head label { font-size:13px; font-weight:800; }
+    .manual-discount-clear { width:30px; height:30px; border:0; background:transparent; color:var(--red); display:grid; place-items:center; padding:0; }
+    .manual-discount-clear svg { width:16px; height:16px; }
+    .manual-discount-controls { display:grid; grid-template-columns:106px minmax(0,1fr); gap:8px; margin-top:7px; }
+    .discount-modes { display:grid; grid-template-columns:1fr 1fr; height:40px; }
+    .discount-modes button { border:1px solid var(--line); background:#fff; font-weight:800; }
+    .discount-modes button:first-child { border-radius:5px 0 0 5px; }
+    .discount-modes button:last-child { margin-left:-1px; border-radius:0 5px 5px 0; }
+    .discount-modes button[aria-pressed="true"] { position:relative; z-index:1; border-color:var(--green); background:#edf8f3; color:var(--green); }
+    .manual-discount-controls input { width:100%; min-width:0; height:40px; border:1px solid var(--line); border-radius:5px; padding:0 10px; font-variant-numeric:tabular-nums; }
+    .manual-discount-controls input:focus { outline:2px solid #cce8dc; border-color:var(--green); }
+    .model-field { display:grid; gap:3px; margin-top:5px; }
+    .model-field span { color:var(--muted); font-size:10px; line-height:1.2; }
+    .model-input { width:100%; min-width:150px; height:29px; border:1px solid var(--line); border-radius:4px; padding:0 7px; background:#fff; font:inherit; font-size:12px; }
+    .model-input:focus { outline:2px solid #cce8dc; border-color:var(--green); }
+    .note-input { width:100%; height:24px; margin-top:4px; border:1px solid var(--line); border-radius:4px; padding:0 6px; font:inherit; font-size:10px; }
+    .order-note { display:grid; gap:6px; margin-top:16px; }
+    .order-note label { color:var(--muted); font-size:13px; font-weight:700; }
+    .order-note textarea { width:100%; min-height:76px; border:1px solid var(--line); border-radius:6px; padding:9px 10px; resize:vertical; font:inherit; line-height:1.4; }
+    .receipt-print.receipt-measuring {
+      display: block !important;
+      position: fixed !important;
+      top: 0;
+      left: -10000px;
+      visibility: hidden;
+      width: 50mm !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 2mm .5mm !important;
+      overflow: visible;
+      color: #000;
+      background: #fff;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      font-size: 10px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .receipt-print.receipt-measuring .receipt-head { text-align:center; border-bottom:1px dashed #000; padding-bottom:6px; }
+    .receipt-print.receipt-measuring .receipt-head strong { display:block; font-size:15px; }
+    .receipt-print.receipt-measuring .receipt-meta { display:grid; gap:2px; padding:4px 0; border-bottom:1px dashed #000; }
+    .receipt-print.receipt-measuring .receipt-line { padding:4px 0; border-bottom:1px dotted #777; }
+    .receipt-print.receipt-measuring .receipt-line strong,
+    .receipt-print.receipt-measuring .receipt-line span { display:block; }
+    .receipt-print.receipt-measuring .receipt-line span { text-align:right; }
+    .receipt-print.receipt-measuring .receipt-line-discounted { font-size:9px; }
+    .receipt-print.receipt-measuring .receipt-total { display:flex; justify-content:space-between; font-size:14px; font-weight:800; padding:7px 0; border-bottom:1px dashed #000; }
+    .receipt-print.receipt-measuring .receipt-tax { display:grid; gap:2px; padding:5px 0; border-bottom:1px dashed #000; }
+    .receipt-print.receipt-measuring .receipt-tax span { display:flex; justify-content:space-between; }
+    .receipt-print.receipt-measuring .receipt-footer { text-align:center; padding-top:6px; }
+    @page { size:50mm auto; margin:0; }
+    @media print {
+      html,body {
+        width:50mm!important;
+        min-width:0!important;
+        min-height:0!important;
+        height:auto!important;
+        margin:0!important;
+        padding:0!important;
+        overflow:visible!important;
+        background:#fff!important;
+      }
+      .receipt-print {
+        display:block!important;
+        position:static!important;
+        top:0!important;
+        left:0!important;
+        right:auto!important;
+        width:50mm!important;
+        min-height:0!important;
+        margin:0!important;
+        padding:0 2mm .5mm!important;
+        overflow:visible!important;
+        overflow-wrap:anywhere;
+        break-before:avoid-page;
+        break-after:avoid-page;
+        page-break-before:avoid;
+        page-break-after:avoid;
+        -webkit-print-color-adjust:exact;
+        print-color-adjust:exact;
+      }
+      .receipt-print .receipt-head { padding-bottom:4px; }
+      .receipt-print .receipt-meta { padding:4px 0; }
+      .receipt-print .receipt-line { padding:4px 0; }
+      .receipt-print .receipt-line-discounted { font-size:9px; }
+      .receipt-print .receipt-total { padding:7px 0; }
+      .receipt-print .receipt-tax { padding:5px 0; }
+      .receipt-print .receipt-policy { display:none!important; }
+      .receipt-print .receipt-footer { padding-top:6px; }
+      .receipt-print > * { break-inside:avoid; page-break-inside:avoid; }
+    }
+    .auth-loading-panel { display:grid; justify-items:center; gap:10px; text-align:center; }
+    .auth-loading-panel svg { width:26px; height:26px; color:var(--green); animation:spin 1s linear infinite; }
+    .auth-loading-panel h1 { margin:0; font-size:21px; }
+    .auth-loading-panel p { margin:0; color:var(--muted); }
+  </style>
+  <style id="receiptPageStyle">@page { size:50mm auto; margin:0; }</style>
+</head>
+<body>
+  <section class="login auth-loading" id="authLoading" aria-live="polite">
+    <div class="login-panel auth-loading-panel">
+      <i data-lucide="loader-circle"></i>
+      <h1 id="authLoadingTitle">Connecting to admin</h1>
+      <p id="authLoadingHint">Checking your existing GO GO SHOP admin session...</p>
+    </div>
+  </section>
+  <section class="login hidden" id="loginView">
+    <form class="login-panel" id="loginForm">
+      <h1 id="loginTitle">POS Login</h1><p class="hint" id="loginHint">Use your GO GO SHOP admin account</p>
+      <label class="field"><span id="emailLabel">Admin Email</span><input id="email" type="email" autocomplete="username" required></label>
+      <label class="field"><span id="passwordLabel">Password</span><input id="password" type="password" autocomplete="current-password" required autofocus></label>
+      <button class="primary" type="submit"><i data-lucide="log-in"></i><span id="loginButtonText">Sign in to POS</span></button>
+      <button class="secondary" id="resetPasswordBtn" type="button" style="width:100%;margin-top:10px"><i data-lucide="key-round"></i><span id="resetButtonText">Forgot Password</span></button>
+      <p class="message" id="loginMessage"></p>
+    </form>
+  </section>
+  <section class="login hidden" id="recoveryView">
+    <form class="login-panel" id="recoveryForm">
+      <h1 id="recoveryTitle">Set New Password</h1><p class="hint" id="recoveryHint">Choose a new admin password (8+ characters)</p>
+      <label class="field"><span id="newPasswordLabel">New Password</span><input id="newPassword" type="password" autocomplete="new-password" minlength="8" required></label>
+      <label class="field"><span id="confirmPasswordLabel">Confirm Password</span><input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" required></label>
+      <button class="primary" type="submit"><i data-lucide="save"></i><span id="recoveryButtonText">Save and open POS</span></button>
+      <p class="message" id="recoveryMessage"></p>
+    </form>
+  </section>
+  <section class="app hidden" id="appView">
+    <header class="topbar"><div class="brand"><i data-lucide="scan-barcode"></i><span>GO GO SHOP</span><b id="posTitle">POS</b></div><div class="top-actions"><button class="icon-btn" id="languageBtn" type="button">中文</button><a class="icon-btn" href="./gogoshop.html#admin"><i data-lucide="layout-dashboard"></i><span id="adminLinkText">Admin</span></a><button class="icon-btn" id="logoutBtn"><i data-lucide="log-out"></i><span id="logoutText">Sign out</span></button></div></header>
+    <main class="workspace">
+      <section class="catalog">
+        <div class="scan-wrap">
+          <div class="scan-label"><strong id="scanTitle">Scan Product or Customer</strong><span class="hint" id="scanHint">One scanner for every code</span></div>
+          <form class="scan-row" id="scanForm"><input class="scan-input" id="scanInput" type="search" placeholder="Product code, customer barcode or email" autocomplete="off"><button class="primary" type="submit"><i data-lucide="scan-line"></i><span id="addText">Scan</span></button></form>
+          <p class="status" id="scanStatus" aria-live="polite">Product data syncs with the online store</p>
+          <div class="selected-customer hidden" id="selectedCustomer"><div><strong id="selectedCustomerName"></strong><span id="selectedCustomerEmail"></span></div><button type="button" id="clearCustomer"><span id="customerClearButton">Clear</span></button></div>
+          <div class="voucher-panel hidden" id="voucherPanel"><div class="voucher-head"><strong id="voucherTitle">Available Vouchers</strong><span id="voucherCount"></span></div><div class="voucher-list" id="voucherList"></div></div>
+        </div>
+        <div class="cart-head"><h2 id="orderTitle">Current Order</h2><button class="secondary" id="clearBtn" type="button"><i data-lucide="trash-2"></i><span id="clearText">Clear</span></button></div>
+        <div id="cartContent"></div>
+      </section>
+      <aside class="summary">
+        <h2 id="summaryTitle">Order Summary</h2>
+        <div class="manual-discount-panel">
+          <div class="manual-discount-head"><label for="manualDiscountValue" id="manualDiscountLabel">Order Discount</label><button class="manual-discount-clear hidden" id="clearManualDiscount" type="button" title="Clear Discount"><i data-lucide="x"></i></button></div>
+          <div class="manual-discount-controls"><div class="discount-modes" id="manualDiscountType" role="group" aria-label="Discount Type"><button type="button" data-manual-discount-type="percent" aria-pressed="true">%</button><button type="button" data-manual-discount-type="fixed" aria-pressed="false">NZ$</button></div><input id="manualDiscountValue" type="number" min="0" max="100" step="0.01" inputmode="decimal" placeholder="0" aria-label="Order Discount"></div>
+        </div>
+        <div class="totals"><div class="total-row"><span id="lineLabel">Line Items</span><strong id="lineCount">0</strong></div><div class="total-row"><span id="itemLabel">Quantity</span><strong id="itemCount">0</strong></div><div class="total-row"><span id="subtotalLabel">Subtotal</span><strong id="subtotal">NZ$0.00</strong></div><div class="total-row discount-row hidden" id="discountRow"><span id="discountLabel">Voucher Discount</span><strong id="discount">-NZ$0.00</strong></div><div class="total-row discount-row hidden" id="manualDiscountRow"><span id="manualDiscountAppliedLabel">Order Discount</span><strong id="manualDiscount">-NZ$0.00</strong></div><div class="total-row grand"><span id="dueLabel">Due</span><strong id="total">NZ$0.00</strong></div></div>
+        <div class="order-note"><label for="orderNote" id="orderNoteLabel">Order Note</label><textarea id="orderNote" rows="3" maxlength="1000" placeholder="Add a note for this order"></textarea></div>
+        <div class="last-order hidden" id="lastOrder"></div><div class="print-controls"><label class="auto-print"><input id="autoPrint" type="checkbox" checked><span id="autoPrintText">Print Receipt Automatically</span></label><button class="secondary hidden" id="reprintBtn" type="button"><i data-lucide="printer"></i><span id="reprintText">Reprint Last Receipt</span></button></div><p class="summary-note" id="summaryNote">Inventory is deducted only after the order is completed successfully. The order appears in the web admin immediately.</p>
+        <button class="primary complete" id="completeBtn" type="button" disabled><i data-lucide="circle-check-big"></i><span id="completeText">Complete Order</span></button>
+      </aside>
+    </main>
+  </section>
+  <section class="receipt-print" id="receiptPrint" aria-hidden="true"></section>
+  <div class="loading hidden" id="loading"><div><i data-lucide="loader-circle"></i><span id="loadingText">Completing order...</span></div></div>
+  <script>
+    const STORE_CONFIG=window.GOGO_SHOP_CONFIG||{};
+    const SUPABASE_URL=String(STORE_CONFIG.supabaseUrl||"").trim();
+    const SUPABASE_KEY=String(STORE_CONFIG.supabasePublishableKey||"").trim();
+    const SUPABASE_PROJECT_REF=/^https:\/\/([a-z0-9-]+)\.supabase\.co/i.exec(SUPABASE_URL)?.[1]||"unconfigured";
+    const SUPABASE_AUTH_STORAGE_KEY=`sb-${SUPABASE_PROJECT_REF}-auth-token`;
+    const db=SUPABASE_URL&&SUPABASE_KEY?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{flowType:"pkce",detectSessionInUrl:true,persistSession:true,storageKey:SUPABASE_AUTH_STORAGE_KEY}}):null;
+    const openedFromAdmin=new URLSearchParams(location.search).get("from")==="admin";
+    const EXPERIMENTAL_ITEM_CODE_START=1001;
+    const state={products:[],productLookup:new Map(),cart:new Map(),itemNotes:new Map(),itemModels:new Map(),priceOverrides:new Map(),manualDiscount:{type:"percent",value:0},profile:null,customer:null,customerVouchers:[],selectedVoucherId:null,customerLookupBusy:false,busy:false,lastReceipt:null,lang:localStorage.getItem("gogoshop-pos-lang")||"en"};
+    const I18N={en:{authLoadingTitle:"Connecting to admin",authLoadingHint:"Checking your existing GO GO SHOP admin session...",sessionExpired:"The admin session has expired. Please sign in again.",loginTitle:"POS login",loginHint:"Use your GO GO SHOP admin account",emailLabel:"Admin email",passwordLabel:"Password",loginButtonText:"Sign in to POS",resetButtonText:"Forgot password",recoveryTitle:"Set new password",recoveryHint:"Choose a new admin password (8+ characters)",newPasswordLabel:"New password",confirmPasswordLabel:"Confirm password",recoveryButtonText:"Save and open POS",posTitle:"POS",adminLinkText:"Admin",logoutText:"Sign out",scanTitle:"Scan or enter item code",scanHint:"Scanner input submits with Enter",scanPlaceholder:"Barcode, SKU or item code",addText:"Add",scanStatus:"Product data syncs with the online store",orderTitle:"Current order",clearText:"Clear",summaryTitle:"Order summary",lineLabel:"Line items",itemLabel:"Quantity",dueLabel:"Due",summaryNote:"Inventory is deducted only after the order is completed successfully. The order appears in the web admin immediately.",completeText:"Complete order",loadingText:"Completing order...",autoPrintText:"Print receipt automatically",reprintText:"Reprint last receipt",emptyCart:"Scan a product barcode to start an order",stock:"Stock",remove:"Remove",unknown:"Item not found",insufficient:"Insufficient stock",added:"added",cleared:"Order cleared",saved:"Order saved in web admin",resetSent:"Reset email sent. Use the newest email link; older links have expired.",passwordShort:"Password must be at least 8 characters.",passwordMismatch:"Passwords do not match.",adminOnly:"This account is not an administrator."},zh:{authLoadingTitle:"正在连接后台",authLoadingHint:"正在检查现有的 GO GO SHOP 管理员会话...",sessionExpired:"后台会话已失效，请重新登录管理员账户",loginTitle:"扫码收银",loginHint:"使用 GO GO SHOP 管理员账号",emailLabel:"管理员邮箱",passwordLabel:"管理员密码",loginButtonText:"登录收银台",resetButtonText:"忘记密码，发送重置邮件",recoveryTitle:"设置新密码",recoveryHint:"请输入至少 8 位的新管理员密码",newPasswordLabel:"新密码",confirmPasswordLabel:"再次输入新密码",recoveryButtonText:"保存并进入收银台",posTitle:"扫码收银",adminLinkText:"后台",logoutText:"退出",scanTitle:"扫描或输入货号",scanHint:"扫码枪输入后按 Enter",scanPlaceholder:"条码、SKU 或商品货号",addText:"加入",scanStatus:"商品资料与网络后台实时同步",orderTitle:"本次订单",clearText:"清空",summaryTitle:"订单合计",lineLabel:"商品种类",itemLabel:"商品数量",dueLabel:"应收",summaryNote:"只有订单成功完成后才会扣减库存，订单会立即出现在网页后台。",completeText:"完成订单",loadingText:"正在完成订单...",autoPrintText:"订单完成后自动打印小票",reprintText:"重新打印上一张小票",emptyCart:"扫描商品条码，商品会自动加入订单",stock:"库存",remove:"移除",unknown:"找不到商品",insufficient:"库存不足",added:"已加入",cleared:"订单已清空",saved:"订单已保存到网页后台",resetSent:"重置邮件已发送，请使用最新邮件中的链接。",passwordShort:"新密码至少需要 8 位。",passwordMismatch:"两次输入的密码不一致。",adminOnly:"此账号没有管理员权限。"}};
+    Object.assign(I18N.en,{scanTitle:"Scan product or customer",scanHint:"One scanner for every code",scanPlaceholder:"Product code, customer barcode or email",addText:"Scan",customerCodeFound:"Customer selected",customerCodeNotFound:"Customer not found",customerCodeMigration:"Run the customer barcode migration in Supabase first.",customerCodeCleared:"Customer cleared",customerClearButton:"Clear",customerPoints:"points will be awarded",pointsAwarded:"points awarded",voucherTitle:"Available vouchers",voucherNone:"Do not use a voucher",voucherCount:"available",voucherMinimum:"Minimum spend",voucherNotEligible:"Not eligible",subtotalLabel:"Subtotal",discountLabel:"Voucher discount",manualDiscountLabel:"Order discount",manualDiscountAppliedLabel:"Order discount",discountTypeLabel:"Discount type",discountPlaceholder:"Discount value",clearDiscount:"Clear discount",linePriceLabel:"Unit price",originalPrice:"Original",discountedPrice:"After discount",invalidPrice:"Enter a valid unit price",orderNoteLabel:"Order note",orderNotePlaceholder:"Add a note for this order",itemNotePlaceholder:"Add a note for this item",phoneModelLabel:"Phone model",phoneModelPlaceholder:"Select or enter model",note:"Note"});
+    Object.assign(I18N.en,{loginTitle:"POS Login",emailLabel:"Admin Email",loginButtonText:"Sign In to POS",resetButtonText:"Forgot Password",recoveryTitle:"Set New Password",newPasswordLabel:"New Password",confirmPasswordLabel:"Confirm Password",recoveryButtonText:"Save and Open POS",logoutText:"Sign Out",scanTitle:"Scan Product or Customer",orderTitle:"Current Order",summaryTitle:"Order Summary",lineLabel:"Line Items",completeText:"Complete Order",autoPrintText:"Print Receipt Automatically",reprintText:"Reprint Last Receipt",voucherTitle:"Available Vouchers",voucherMinimum:"Minimum Spend",discountLabel:"Voucher Discount",orderNoteLabel:"Order Note"});
+    Object.assign(I18N.zh,{scanTitle:"扫描商品或客户",scanHint:"商品码与客户码使用同一个扫码框",scanPlaceholder:"商品货号、客户条码或邮箱",addText:"识别",customerCodeFound:"已选择客户",customerCodeNotFound:"找不到客户",customerCodeMigration:"请先在 Supabase 执行客户条形码迁移。",customerCodeCleared:"已清除客户",customerClearButton:"清除",customerPoints:"积分将发放",pointsAwarded:"积分已发放",voucherTitle:"可用代金券",voucherNone:"不使用代金券",voucherCount:"张可用",voucherMinimum:"最低消费",voucherNotEligible:"暂不可用",subtotalLabel:"原价",discountLabel:"代金券抵扣",manualDiscountLabel:"本单折扣",manualDiscountAppliedLabel:"本单折扣",discountTypeLabel:"折扣类型",discountPlaceholder:"折扣数值",clearDiscount:"清除折扣",linePriceLabel:"本单单价",originalPrice:"原价",discountedPrice:"折后单价",invalidPrice:"请输入有效的商品单价",orderNoteLabel:"订单备注",orderNotePlaceholder:"添加整笔订单的备注",itemNotePlaceholder:"添加此商品的备注",phoneModelLabel:"手机型号",phoneModelPlaceholder:"选择或输入型号",note:"备注"});
+    const t=(key,...args)=>{let text=I18N[state.lang][key]||I18N.en[key]||key;args.forEach(value=>{text=text.replace("%s",String(value))});return text};
+    const $=(s)=>document.querySelector(s); const money=new Intl.NumberFormat("en-NZ",{style:"currency",currency:"NZD"});
+    const escapeHtml=(v)=>String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+    function isSupplierSku(value){return /^1688(?:-|$)/i.test(String(value||"").trim())}
+    function manualProductCode(sku,barcode){const normalizedSku=String(sku||"").trim();const normalizedBarcode=String(barcode||"").trim();if(normalizedSku&&!isSupplierSku(normalizedSku))return normalizedSku;if(normalizedBarcode&&!isSupplierSku(normalizedBarcode))return normalizedBarcode;return ""}
+    function productManualCode(product){return manualProductCode(product?.sku,product?.barcode)}
+    function assignExperimentalItemCodes(products=[]){const sortedProducts=[...products].filter(product=>product&&product.id).sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true,sensitivity:"base"}));sortedProducts.forEach(product=>{const generatedCode=String(product.experimentalCode||"").trim();const sku=String(product.sku||"").trim();const barcode=String(product.barcode||"").trim();if(generatedCode&&/^\d+$/.test(generatedCode)){if(sku===generatedCode)product.sku="";if(barcode===generatedCode)product.barcode=""}});const usedManualCodes=new Set(sortedProducts.map(productManualCode).filter(Boolean));let nextCode=EXPERIMENTAL_ITEM_CODE_START;sortedProducts.forEach(product=>{const manualCode=productManualCode(product);if(manualCode)return;while(usedManualCodes.has(String(nextCode)))nextCode+=1;product.experimentalCode=String(nextCode);usedManualCodes.add(product.experimentalCode);nextCode+=1});return products}
+    function productItemCode(product){return String(productManualCode(product)||product?.experimentalCode||"").trim()}
+    const COMMON_PHONE_MODELS=Object.freeze(["iPhone 17","iPhone 17 Pro","iPhone 17 Pro Max","iPhone 17 Air","iPhone 16","iPhone 16 Pro","iPhone 16 Pro Max","iPhone 16 Plus","iPhone 15","iPhone 15 Pro","iPhone 15 Pro Max","iPhone 14","iPhone 14 Pro","iPhone 14 Pro Max","iPhone 13","iPhone 13 Pro","iPhone 13 Pro Max","iPhone 12","iPhone 12 Pro","iPhone 12 Pro Max","iPhone 11","iPhone 11 Pro Max","Samsung S26","Samsung S26 Plus","Samsung S26 Ultra","Samsung S25","Samsung S25 Plus","Samsung S25 Ultra","Samsung S24","Samsung S24 Plus","Samsung S24 Ultra","Samsung S23","Samsung S23 Plus","Samsung S23 Ultra","Samsung A56","Samsung A36","Samsung A16","Samsung A15","Samsung A06","Google Pixel","Huawei Mate","Other / 其他"]);
+    function isPhoneModelProduct(product){
+      const text=[product?.category,product?.title,product?.title_en,product?.title_zh,product?.tags].map(value=>String(value||"").toLocaleLowerCase()).join(" ");
+      return /phone\s*case|screen\s*(?:protector|film)|tempered\s*glass|hydrogel|phone\s*film|phone\s*protector|glass\s*protector|手机壳|手机膜|钢化膜|保护膜|水凝膜|防窥膜|贴膜/.test(text);
+    }
+    function phoneModelOptions(product){
+      const values=[];
+      const add=(value)=>String(value||"").replace(/[\r\n，、|]+/g,",").split(",").map(item=>item.trim()).filter(item=>item&&item.length<=80).forEach(item=>{if(!values.includes(item))values.push(item)});
+      const variants=[product?.source_variants,product?.sourceVariants].find(Array.isArray)||[];
+      variants.forEach(variant=>add(variant?.name??variant?.title??variant?.value??variant));
+      const attributes=[product?.source_attributes,product?.sourceAttributes].find(Array.isArray)||[];
+      attributes.filter(attribute=>/model|型号|机型|适用/.test(String(attribute?.name||""))).forEach(attribute=>add(attribute?.value));
+      return values;
+    }
+    function itemNoteText(productId){
+      const model=String(state.itemModels.get(productId)||"").trim();
+      const note=String(state.itemNotes.get(productId)||"").trim();
+      return [`${model?`${t("phoneModelLabel")}: ${model}`:""}`,note].filter(Boolean).join(" · ").slice(0,500);
+    }
+    function renderPhoneModelFields(lines){
+      const cartContent=$("#cartContent");
+      if(!cartContent)return;
+      const options=[...new Set([...COMMON_PHONE_MODELS,...lines.filter(line=>isPhoneModelProduct(line.product)).flatMap(line=>phoneModelOptions(line.product))])].slice(0,250);
+      const datalist=document.createElement("datalist");
+      datalist.id="phoneModelOptions";
+      datalist.innerHTML=options.map(option=>`<option value="${escapeHtml(option)}"></option>`).join("");
+      cartContent.prepend(datalist);
+      lines.forEach(({product})=>{
+        if(!isPhoneModelProduct(product))return;
+        const noteInput=[...cartContent.querySelectorAll("[data-item-note]")].find(input=>input.dataset.itemNote===product.id);
+        if(!noteInput)return;
+        const field=document.createElement("label");
+        field.className="model-field";
+        field.innerHTML=`<span>${escapeHtml(t("phoneModelLabel"))}</span><input class="model-input" type="text" data-item-model="${escapeHtml(product.id)}" list="phoneModelOptions" maxlength="80" placeholder="${escapeHtml(t("phoneModelPlaceholder"))}" value="${escapeHtml(state.itemModels.get(product.id)||"")}" autocomplete="off">`;
+        noteInput.before(field);
+      });
+    }
+    function receiptLines(){return [...state.cart].map(([id,quantity])=>{const product=state.products.find(item=>item.id===id);const unitPrice=product?cartUnitPrice(product):0;return product?{title:product.title,code:productItemCode(product)||product.id,quantity,unitPrice,subtotal:roundMoney(unitPrice*quantity),note:itemNoteText(id)}:null}).filter(Boolean)}
+    function discountOfferText(type,value){const numeric=Number(value);if(!Number.isFinite(numeric)||numeric<=0)return "";return type==="percent"?`${numeric.toLocaleString("en-NZ",{maximumFractionDigits:2})}% OFF`:`${money.format(numeric)} OFF`}
+    function receiptDiscountedUnitPrice(line,receipt){const subtotal=roundMoney(receipt?.subtotal);const discount=Math.min(subtotal,Math.max(0,roundMoney(receipt?.discount)));const unitPrice=roundMoney(line?.unitPrice);if(!subtotal||discount<=0)return unitPrice;return roundMoney(unitPrice*(subtotal-discount)/subtotal)}
+    function receiptLineMarkup(line,receipt,isChinese){const hasDiscount=Number(receipt.discount||0)>0;const discountedUnitPrice=receiptDiscountedUnitPrice(line,receipt);const discountedSubtotal=roundMoney(discountedUnitPrice*Number(line.quantity||0));const originalLine=`<span>${escapeHtml(line.code)} · ${line.quantity} × ${money.format(line.unitPrice)} = ${money.format(line.subtotal)}</span>`;const discountedLine=hasDiscount?`<span class="receipt-line-discounted">${isChinese?"折后":"After discount"}: ${line.quantity} × ${money.format(discountedUnitPrice)} = ${money.format(discountedSubtotal)}</span>`:"";return `<div class="receipt-line"><strong>${escapeHtml(line.title)}</strong>${originalLine}${discountedLine}${line.note?`<span>${isChinese?"备注":"Note"}: ${escapeHtml(line.note)}</span>`:""}</div>`}
+    function renderReceipt(){
+      const receipt=state.lastReceipt;
+      if(!receipt)return;
+      const isChinese=receipt.lang==="zh";
+      const locale=isChinese?"zh-CN":"en-NZ";
+      const date=new Date(receipt.createdAt).toLocaleString(locale);
+      if(!receipt.customer&&state.customer){receipt.customer={name:customerDisplayName(state.customer),email:state.customer.email||"",barcode:state.customer.customer_barcode||"",pointsAwarded:Math.round(Number(receipt.total)||0)}}
+      const gstAmount=Math.round((Number(receipt.total)||0)*15/115*100)/100;
+      const customerBlock=receipt.customer?`<div class="receipt-meta"><strong>${isChinese?"客户信息":"Customer Details"}</strong><span>${isChinese?"客户":"Customer"}: ${escapeHtml(receipt.customer.name)}</span>${receipt.customer.email?`<span>${isChinese?"邮箱":"Email"}: ${escapeHtml(receipt.customer.email)}</span>`:""}${receipt.customer.barcode?`<span>${isChinese?"客户号":"Customer ID"}: ${escapeHtml(receipt.customer.barcode)}</span>`:""}<span>${isChinese?"本次积分":"Points Earned"}: +${Number(receipt.customer.pointsAwarded||0)}</span></div>`:"";
+      const voucherOffer=discountOfferText(receipt.voucherDiscountType,receipt.voucherDiscountValue);
+      const manualOffer=discountOfferText(receipt.manualDiscountType,receipt.manualDiscountValue);
+      const voucherDiscountLine=Number(receipt.voucherDiscount||0)>0?`<span>${isChinese?"代金券":"Voucher"}${receipt.voucherCode?` ${escapeHtml(receipt.voucherCode)}`:""}: ${voucherOffer?`${voucherOffer} `:""}(-${money.format(receipt.voucherDiscount)})</span>`:"";
+      const manualDiscountLine=Number(receipt.manualDiscount||0)>0?`<span>${isChinese?"本单折扣":"Order Discount"}: ${manualOffer?`${manualOffer} `:""}(-${money.format(receipt.manualDiscount)})</span>`:"";
+      const fallbackDiscountLine=receipt.discount>0&&!voucherDiscountLine&&!manualDiscountLine?`<span>${isChinese?"优惠":"Discount"}: -${money.format(receipt.discount)}</span>`:"";
+      const totalSavingsLine=receipt.discount>0?`<span><strong>${isChinese?"总优惠":"Total Savings"}</strong>: -${money.format(receipt.discount)}</span>`:"";
+      const discountBlock=receipt.discount>0?`<div class="receipt-meta"><span>${isChinese?"原价":"Subtotal"}: ${money.format(receipt.subtotal)}</span>${voucherDiscountLine}${manualDiscountLine}${fallbackDiscountLine}${totalSavingsLine}</div>`:"";
+      const orderNoteBlock=receipt.orderNote?`<div class="receipt-meta"><span>${isChinese?"订单备注":"Order Note"}: ${escapeHtml(receipt.orderNote)}</span></div>`:"";
+      const gstBlock=`<div class="receipt-tax"><strong>${isChinese?"价格包含 GST 15%":"Prices Include GST 15%"}</strong><span><span>${isChinese?"其中 GST 税额":"GST Included"}</span><b>${money.format(gstAmount)}</b></span></div>`;
+      $("#receiptPrint").innerHTML=`<div class="receipt-head"><strong>GO GO SHOP</strong><span>${isChinese?"销售小票":"SALES RECEIPT"}</span></div><div class="receipt-meta"><span>${isChinese?"订单号":"Order"}: ${escapeHtml(receipt.orderNumber)}</span><span>${isChinese?"时间":"Date"}: ${escapeHtml(date)}</span></div>${customerBlock}${receipt.lines.map(line=>receiptLineMarkup(line,receipt,isChinese)).join("")}${discountBlock}${orderNoteBlock}<div class="receipt-total"><span>${isChinese?"合计":"TOTAL"}</span><span>${money.format(receipt.total)}</span></div>${gstBlock}<div class="receipt-footer">${isChinese?"谢谢惠顾":"Thank You"}</div>`;
+    }
+    const RECEIPT_PAPER_WIDTH_MM=50;
+    function prepareReceiptPage(){
+      const receipt=$("#receiptPrint");
+      receipt.classList.add("receipt-measuring");
+      const rect=receipt.getBoundingClientRect();
+      receipt.classList.remove("receipt-measuring");
+      if(!rect.width||!rect.height)return null;
+      const heightMm=Math.ceil((RECEIPT_PAPER_WIDTH_MM*rect.height/rect.width)*2)/2;
+      // The PUQU driver accepts custom continuous length; use the measured height to avoid clipped long receipts.
+      $("#receiptPageStyle").textContent=`@page { size:${RECEIPT_PAPER_WIDTH_MM}mm ${heightMm}mm; margin:0; }`;
+      receipt.dataset.pageHeightMm=String(heightMm);
+      return heightMm;
+    }
+    function printLastReceipt(){if(!state.lastReceipt)return;renderReceipt();prepareReceiptPage();window.print()}
+    window.addEventListener("beforeprint",()=>{if(state.lastReceipt){renderReceipt();prepareReceiptPage()}});
+    function icons(){window.lucide?.createIcons()}
+    function applyLanguage(){const ids=Object.keys(I18N.en);ids.forEach(id=>{const node=$("#"+id);if(node)node.textContent=t(id)});$("#scanInput").placeholder=t("scanPlaceholder");$("#orderNote").placeholder=t("orderNotePlaceholder");$("#manualDiscountValue").placeholder=t("discountPlaceholder");$("#manualDiscountValue").setAttribute("aria-label",t("manualDiscountLabel"));$("#manualDiscountType").setAttribute("aria-label",t("discountTypeLabel"));$("#clearManualDiscount").title=t("clearDiscount");$("#languageBtn").textContent=state.lang==="en"?"中文":"English";document.documentElement.lang=state.lang==="en"?"en":"zh-CN";document.title=state.lang==="en"?"GO GO SHOP POS":"GO GO SHOP 扫码收银";render();renderVoucherOptions();icons()}
+    function setStatus(text,type=""){$("#scanStatus").textContent=text;$("#scanStatus").className=`status ${type}`}
+    function rebuildProductLookup(){state.productLookup.clear();state.products.forEach(product=>[product.sku,product.barcode,product.experimentalCode,product.id].forEach(value=>{const key=normalizeScanValue(value).toLowerCase();if(key&&!state.productLookup.has(key))state.productLookup.set(key,product)}))}
+    async function loadProducts(){const {data,error}=await db.from("products").select("id,title,title_en,title_zh,category,price,stock,image,sku,barcode,tags,deleted_at").is("deleted_at",null).order("title");if(error)throw error;state.products=assignExperimentalItemCodes(data||[]);rebuildProductLookup()}
+    async function loadProductModelOptions(product){if(!product||product.modelOptionsLoaded||!isPhoneModelProduct(product))return;product.modelOptionsLoaded=true;const {data,error}=await db.from("products").select("source_variants,source_attributes").eq("id",product.id).maybeSingle();if(error||!data)return;product.source_variants=data.source_variants;product.source_attributes=data.source_attributes;if(state.cart.has(product.id))render()}
+    async function checkAdmin(user){const {data,error}=await db.from("profiles").select("id,is_admin").eq("id",user.id).single();if(error||!data?.is_admin)throw new Error("此账号没有管理员权限");state.profile=data}
+    function setAuthView(view){["authLoading","loginView","recoveryView","appView"].forEach(id=>$("#"+id).classList.toggle("hidden",id!==view))}
+    function showLogin(message=""){state.profile=null;setAuthView("loginView");$("#loginMessage").textContent=message?loginError(message):"";loadAdminEmail()}
+    async function enterApp(user){await checkAdmin(user);await loadProducts();setAuthView("appView");render();setTimeout(()=>$("#scanInput").focus(),50)}
+    function showRecovery(){setAuthView("recoveryView");setTimeout(()=>$("#newPassword").focus(),50)}
+    async function loadAdminEmail(){if(!db)return;const {data}=await db.rpc("get_admin_login_email");if(data&&!$("#email").value)$("#email").value=data}
+    function loginError(error){const message=String(error?.message||error||"");if(/invalid login credentials/i.test(message))return state.lang==="zh"?"邮箱或密码不正确，请重置密码后重试。":"Email or password is incorrect. Use Forgot password to reset it.";if(/email not confirmed/i.test(message))return state.lang==="zh"?"请先完成邮箱验证。":"Confirm your email address first.";if(/failed to fetch|network/i.test(message))return state.lang==="zh"?"无法连接网络后台，请检查网络后重试。":"Cannot connect to the online store. Check your network and try again.";return message|| (state.lang==="zh"?"登录失败，请重试。":"Sign-in failed. Please try again.")}
+    $("#loginForm").addEventListener("submit",async e=>{e.preventDefault();$("#loginMessage").textContent="正在登录...";try{const email=$("#email").value.trim();const {data,error}=await db.auth.signInWithPassword({email,password:$("#password").value});if(error)throw error;await enterApp(data.user)}catch(error){$("#loginMessage").textContent=loginError(error)}});
+    $("#resetPasswordBtn").addEventListener("click",async()=>{const email=$("#email").value.trim();if(!email){$("#loginMessage").textContent=state.lang==="zh"?"请先填写管理员邮箱。":"Enter the admin email first.";$("#email").focus();return}const button=$("#resetPasswordBtn");button.disabled=true;$("#loginMessage").textContent=state.lang==="zh"?"正在发送重置邮件...":"Sending reset email...";const redirectTo=`${location.origin}${location.pathname}?reset=password`;const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});button.disabled=false;$("#loginMessage").textContent=error?loginError(error):t("resetSent")});
+    $("#recoveryForm").addEventListener("submit",async e=>{e.preventDefault();const password=$("#newPassword").value;const confirmation=$("#confirmPassword").value;if(password.length<8){$("#recoveryMessage").textContent=t("passwordShort");return}if(password!==confirmation){$("#recoveryMessage").textContent=t("passwordMismatch");return}$("#recoveryMessage").textContent=state.lang==="zh"?"正在保存新密码...":"Saving new password...";const {data,error}=await db.auth.updateUser({password});if(error){$("#recoveryMessage").textContent=loginError(error);return}history.replaceState({},"",location.pathname);$("#recoveryView").classList.add("hidden");try{await enterApp(data.user)}catch(error){$("#recoveryMessage").textContent=loginError(error);$("#recoveryView").classList.remove("hidden")}});
+    $("#languageBtn").addEventListener("click",()=>{state.lang=state.lang==="en"?"zh":"en";localStorage.setItem("gogoshop-pos-lang",state.lang);applyLanguage()});
+    $("#autoPrint").checked=localStorage.getItem("gogoshop-pos-auto-print")!=="false";
+    $("#autoPrint").addEventListener("change",()=>localStorage.setItem("gogoshop-pos-auto-print",String($("#autoPrint").checked)));
+    $("#reprintBtn").addEventListener("click",printLastReceipt);
+    function normalizeScanValue(value){return String(value||"").normalize("NFKC").replace(/[\u0000-\u001f\u007f]/g,"").trim().toUpperCase().replace(/^\*+|\*+$/g,"").replace(/\s+/g,"")}
+    function findProduct(code){return state.productLookup.get(normalizeScanValue(code).toLowerCase())||null}
+    function customerDisplayName(customer){return String(customer?.full_name||customer?.email||"Customer").trim()}
+    function customerBarcodeVariants(value){const cleaned=normalizeScanValue(value);const compact=cleaned.replace(/[^0-9A-Z]/g,"");const code=compact.startsWith("CUST")?compact.slice(4):compact;if(!/^[0-9A-Z]{10}$/.test(code))return [];return [...new Set([`CUST-${code}`,code,cleaned])]}
+    function normalizeCustomerBarcode(value){return customerBarcodeVariants(value)[0]||""}
+    function isCustomerBarcode(value){return Boolean(normalizeCustomerBarcode(value))}
+    function renderCustomerSelection(){const panel=$("#selectedCustomer");const customer=state.customer;panel.classList.toggle("hidden",!customer);if(customer){$("#selectedCustomerName").textContent=customerDisplayName(customer);$("#selectedCustomerEmail").textContent=customer.email||customer.customer_barcode||""}}
+    function roundMoney(value){return Math.round((Number(value)||0)*100)/100}
+    function cartUnitPrice(product){if(!product)return 0;const override=state.priceOverrides.get(product.id);return Number.isFinite(override)&&override>=0?roundMoney(override):roundMoney(product.price)}
+    function hasPriceOverride(product){return Boolean(product)&&state.priceOverrides.has(product.id)&&Math.abs(cartUnitPrice(product)-roundMoney(product.price))>=0.005}
+    function cartSubtotal(){return roundMoney([...state.cart].reduce((sum,[id,quantity])=>{const product=state.products.find(item=>item.id===id);return sum+cartUnitPrice(product)*quantity},0))}
+    function voucherValue(voucher,subtotal=cartSubtotal()){if(!voucher)return 0;if(voucher.discount_type==="fixed")return Math.min(subtotal,Number(voucher.discount_value||0));let value=Math.round(subtotal*Number(voucher.discount_value||0))/100;if(voucher.maximum_discount!=null)value=Math.min(value,Number(voucher.maximum_discount));return Math.min(subtotal,value)}
+    function manualDiscountValue(subtotal=cartSubtotal(),voucherDiscount=0){const available=Math.max(0,roundMoney(subtotal)-roundMoney(voucherDiscount));const value=Math.max(0,Number(state.manualDiscount.value)||0);if(!value||!available)return 0;if(state.manualDiscount.type==="fixed")return Math.min(available,roundMoney(value));return Math.min(available,roundMoney(available*Math.min(100,value)/100))}
+    function discountedUnitPrice(product,subtotal=cartSubtotal(),discount=0){const unitPrice=cartUnitPrice(product);const baseSubtotal=roundMoney(subtotal);const discountAmount=Math.min(baseSubtotal,Math.max(0,roundMoney(discount)));if(!product||!baseSubtotal||discountAmount<=0)return unitPrice;return roundMoney(unitPrice*(baseSubtotal-discountAmount)/baseSubtotal)}
+    function renderDiscountedLinePrices(subtotal,discount){if(discount<=0)return;document.querySelectorAll("#cartContent [data-line-price]").forEach(input=>{const product=state.products.find(item=>item.id===input.dataset.linePrice);const cell=input.closest("td");if(!product||!cell)return;const row=document.createElement("small");row.className="line-price-discounted";const label=document.createElement("span");label.textContent=t("discountedPrice");const value=document.createElement("strong");value.textContent=money.format(discountedUnitPrice(product,subtotal,discount));row.append(label,value);cell.append(row)})}
+    function voucherEligible(entry,subtotal=cartSubtotal()){const voucher=entry?.vouchers;const now=Date.now();return Boolean(voucher?.active)&&!entry.used_at&&!entry.order_id&&(!voucher.starts_at||new Date(voucher.starts_at).getTime()<=now)&&(!voucher.expires_at||new Date(voucher.expires_at).getTime()>now)&&subtotal>=Number(voucher.minimum_spend||0)}
+    function voucherLabel(voucher){return voucher.discount_type==="percent"?`${Number(voucher.discount_value)}%`:`${money.format(voucher.discount_value)}`}
+    function selectedVoucher(){return state.customerVouchers.find(entry=>entry.id===state.selectedVoucherId&&voucherEligible(entry))||null}
+    function renderVoucherOptions(){const panel=$("#voucherPanel");if(!panel)return;panel.classList.toggle("hidden",!state.customer);if(!state.customer)return;const subtotal=cartSubtotal();const eligible=state.customerVouchers.filter(entry=>voucherEligible(entry,subtotal));if(state.selectedVoucherId&&!eligible.some(entry=>entry.id===state.selectedVoucherId))state.selectedVoucherId=null;$("#voucherCount").textContent=`${eligible.length} ${t("voucherCount")}`;$("#voucherList").innerHTML=`<label class="voucher-option"><input type="radio" name="posVoucher" value="" ${state.selectedVoucherId?"":"checked"}><div><strong>${t("voucherNone")}</strong></div><b>${money.format(0)}</b></label>${state.customerVouchers.map(entry=>{const voucher=entry.vouchers||{};const canUse=voucherEligible(entry,subtotal);return `<label class="voucher-option"><input type="radio" name="posVoucher" value="${escapeHtml(entry.id)}" ${state.selectedVoucherId===entry.id?"checked":""} ${canUse?"":"disabled"}><div><strong>${escapeHtml(voucher.code||"")} · ${escapeHtml(voucher.name||"")}</strong><span>${t("voucherMinimum")} ${money.format(voucher.minimum_spend||0)}${canUse?"":` · ${t("voucherNotEligible")}`}</span></div><b>-${escapeHtml(voucherLabel(voucher))}</b></label>`}).join("")}`;icons()}
+    async function loadCustomerVouchers(){state.customerVouchers=[];state.selectedVoucherId=null;if(!state.customer)return;const {data,error}=await db.from("customer_vouchers").select("id,used_at,order_id,vouchers(id,code,name,discount_type,discount_value,minimum_spend,maximum_discount,starts_at,expires_at,active)").eq("user_id",state.customer.id).is("used_at",null).is("order_id",null);if(error)throw error;state.customerVouchers=data||[]}
+    async function selectCustomer(value){const raw=String(value||"").trim();const barcodeVariants=customerBarcodeVariants(raw);const normalizedBarcode=barcodeVariants[0]||"";const isBarcode=Boolean(normalizedBarcode);const isEmail=raw.includes("@");if(!isBarcode&&!isEmail)return false;state.customerLookupBusy=true;setStatus(state.lang==="zh"?"正在识别客户...":"Finding customer...");try{let query=db.from("profiles").select("id,email,full_name,customer_barcode").eq("is_admin",false);query=isBarcode?query.in("customer_barcode",barcodeVariants):query.ilike("email",raw);const {data,error}=await query.maybeSingle();if(error)throw error;if(!data){state.customer=null;state.customerVouchers=[];state.selectedVoucherId=null;setStatus(t("customerCodeNotFound"),"error");return true}state.customer=data;await loadCustomerVouchers();setStatus(`${t("customerCodeFound")}: ${customerDisplayName(data)} · ${t("customerPoints")}`,"success");return true}catch(error){state.customer=null;state.customerVouchers=[];state.selectedVoucherId=null;setStatus(/customer_barcode/i.test(error.message||"")?t("customerCodeMigration"):error.message,"error");return true}finally{state.customerLookupBusy=false;renderCustomerSelection();renderVoucherOptions();render()}}
+    function addCode(code){const product=findProduct(code);if(!product){setStatus(`${t("unknown")}: ${code}`,"error");return}const current=state.cart.get(product.id)||0;if(current>=Number(product.stock)){setStatus(`${product.title} ${t("insufficient")} (${product.stock})`,"error");return}state.cart.set(product.id,current+1);setStatus(`${product.title} ${t("added")} (${current+1})`,"success");render();void loadProductModelOptions(product).catch(()=>{});$("#scanInput").value=""}
+    $("#scanForm").addEventListener("submit",async e=>{e.preventDefault();const value=$("#scanInput").value.trim();if(value){const product=findProduct(value);if(product)addCode(value);else if(!await selectCustomer(value))setStatus(`${t("unknown")}: ${value}`,"error");$("#scanInput").value=""}$("#scanInput").focus()});
+    $("#clearCustomer").addEventListener("click",()=>{state.customer=null;state.customerVouchers=[];state.selectedVoucherId=null;setStatus(t("customerCodeCleared"));renderCustomerSelection();renderVoucherOptions();render();$("#scanInput").focus()});
+    $("#voucherList").addEventListener("change",event=>{if(event.target.name!=="posVoucher")return;state.selectedVoucherId=event.target.value||null;render()});
+    $("#manualDiscountType").addEventListener("click",event=>{const button=event.target.closest("[data-manual-discount-type]");if(!button)return;state.manualDiscount.type=button.dataset.manualDiscountType==="fixed"?"fixed":"percent";if(state.manualDiscount.type==="percent")state.manualDiscount.value=Math.min(100,Number(state.manualDiscount.value)||0);render();$("#manualDiscountValue").focus()});
+    $("#manualDiscountValue").addEventListener("input",event=>{const maximum=state.manualDiscount.type==="percent"?100:999999.99;const value=Math.min(maximum,Math.max(0,Number(event.target.value)||0));state.manualDiscount.value=roundMoney(value);if(Number(event.target.value)>maximum)event.target.value=String(maximum);render()});
+    $("#manualDiscountValue").addEventListener("change",event=>{event.target.value=state.manualDiscount.value?String(state.manualDiscount.value):"";render()});
+    $("#clearManualDiscount").addEventListener("click",()=>{state.manualDiscount={type:"percent",value:0};render();$("#scanInput").focus()});
+    function updateQty(id,value){const product=state.products.find(p=>p.id===id);const quantity=Math.max(0,Math.min(Number(product?.stock||0),Math.floor(Number(value)||0)));if(quantity)state.cart.set(id,quantity);else{state.cart.delete(id);state.itemNotes.delete(id);state.itemModels.delete(id);state.priceOverrides.delete(id)}render();$("#scanInput").focus()}
+    function applyLocalStockDecrease(soldQuantities){soldQuantities.forEach((quantity,id)=>{const product=state.products.find(item=>item.id===id);if(product)product.stock=Math.max(0,(Number(product.stock)||0)-quantity)});rebuildProductLookup()}
+    function setLinePrice(id,value){const product=state.products.find(item=>item.id===id);const numeric=Number(value);if(!product||!Number.isFinite(numeric)||numeric<0||numeric>999999.99){setStatus(t("invalidPrice"),"error");render();return}const price=roundMoney(numeric);if(Math.abs(price-roundMoney(product.price))<0.005)state.priceOverrides.delete(id);else state.priceOverrides.set(id,price);render();setStatus(`${product.title} · ${t("linePriceLabel")} ${money.format(price)}`,"success")}
+    function render(){
+      const lines=[...state.cart].map(([id,quantity])=>({product:state.products.find(p=>p.id===id),quantity})).filter(x=>x.product);
+      const count=lines.reduce((sum,line)=>sum+line.quantity,0);
+      const subtotal=cartSubtotal();
+      const voucher=selectedVoucher();
+      const voucherDiscount=roundMoney(voucherValue(voucher?.vouchers,subtotal));
+      const manualDiscount=manualDiscountValue(subtotal,voucherDiscount);
+      const totalDiscount=roundMoney(voucherDiscount+manualDiscount);
+      const total=Math.max(0,roundMoney(subtotal-voucherDiscount-manualDiscount));
+      $("#lineCount").textContent=lines.length;
+      $("#itemCount").textContent=state.lang==="zh"?`${count} 件`:String(count);
+      $("#subtotal").textContent=money.format(subtotal);
+      $("#discount").textContent=`-${money.format(voucherDiscount)}`;
+      $("#discountRow").classList.toggle("hidden",voucherDiscount<=0);
+      $("#manualDiscount").textContent=`-${money.format(manualDiscount)}`;
+      const manualDiscountOffer=discountOfferText(state.manualDiscount.type,state.manualDiscount.value);
+      $("#manualDiscountAppliedLabel").textContent=manualDiscount>0&&manualDiscountOffer?`${t("manualDiscountAppliedLabel")} · ${manualDiscountOffer}`:t("manualDiscountAppliedLabel");
+      $("#manualDiscountRow").classList.toggle("hidden",manualDiscount<=0);
+      $("#total").textContent=money.format(total);
+      $("#completeBtn").disabled=!lines.length||state.busy;
+      $("#clearBtn").disabled=!lines.length;
+      const discountInput=$("#manualDiscountValue");
+      discountInput.max=state.manualDiscount.type==="percent"?"100":"999999.99";
+      if(document.activeElement!==discountInput)discountInput.value=state.manualDiscount.value?String(state.manualDiscount.value):"";
+      $("#clearManualDiscount").classList.toggle("hidden",!(Number(state.manualDiscount.value)>0));
+      document.querySelectorAll("[data-manual-discount-type]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.manualDiscountType===state.manualDiscount.type)));
+      $("#cartContent").innerHTML=lines.length?`<table class="cart-table"><thead><tr><th>${state.lang==="zh"?"商品":"Product"}</th><th>${state.lang==="zh"?"单价":"Unit price"}</th><th>${state.lang==="zh"?"数量":"Qty"}</th><th>${state.lang==="zh"?"小计":"Subtotal"}</th><th></th></tr></thead><tbody>${lines.map(({product:p,quantity:q})=>{const unitPrice=cartUnitPrice(p);const overridden=hasPriceOverride(p);return `<tr><td><div class="product-cell"><img class="thumb" src="${escapeHtml(p.image||"")}" alt=""><div class="product-meta"><strong>${escapeHtml(p.title)}</strong><span>${escapeHtml(productItemCode(p)||p.id)} · ${t("stock")} ${p.stock}</span><input class="note-input" type="text" data-item-note="${escapeHtml(p.id)}" maxlength="500" placeholder="${escapeHtml(t("itemNotePlaceholder"))}" value="${escapeHtml(state.itemNotes.get(p.id)||"")}"></div></div></td><td><div class="line-price-editor"><label class="line-price-field"><span>$</span><input type="number" data-line-price="${escapeHtml(p.id)}" min="0" max="999999.99" step="0.01" inputmode="decimal" value="${unitPrice.toFixed(2)}" aria-label="${escapeHtml(t("linePriceLabel"))}"></label>${overridden?`<button class="line-price-reset" type="button" data-reset-line-price="${escapeHtml(p.id)}" title="${escapeHtml(t("originalPrice"))} ${escapeHtml(money.format(p.price))}"><i data-lucide="rotate-ccw"></i></button>`:""}</div>${overridden?`<small class="line-price-original">${escapeHtml(t("originalPrice"))} ${escapeHtml(money.format(p.price))}</small>`:""}</td><td><div class="qty"><button data-id="${escapeHtml(p.id)}" data-delta="-1">−</button><input aria-label="${state.lang==="zh"?"数量":"Quantity"}" data-id="${escapeHtml(p.id)}" value="${q}" inputmode="numeric"><button data-id="${escapeHtml(p.id)}" data-delta="1">+</button></div></td><td><strong>${money.format(unitPrice*q)}</strong></td><td><button class="remove" data-remove="${escapeHtml(p.id)}" title="${t("remove")} "><i data-lucide="x"></i></button></td></tr>`}).join("")}</tbody></table>`:`<div class="empty"><i data-lucide="scan-line"></i><p>${t("emptyCart")}</p></div>`;
+      renderPhoneModelFields(lines);
+      renderDiscountedLinePrices(subtotal,totalDiscount);
+      renderVoucherOptions();
+      icons();
+    }
+    $("#cartContent").addEventListener("click",event=>{const button=event.target.closest("button");if(!button)return;if(button.dataset.remove)updateQty(button.dataset.remove,0);if(button.dataset.delta){const id=button.dataset.id;updateQty(id,(state.cart.get(id)||0)+Number(button.dataset.delta))}if(button.dataset.resetLinePrice){state.priceOverrides.delete(button.dataset.resetLinePrice);render();$("#scanInput").focus()}});
+    $("#cartContent").addEventListener("change",event=>{if(event.target.matches("input[data-id]"))updateQty(event.target.dataset.id,event.target.value);if(event.target.matches("[data-line-price]"))setLinePrice(event.target.dataset.linePrice,event.target.value)});
+    $("#cartContent").addEventListener("input",event=>{if(event.target.matches("[data-item-note]"))state.itemNotes.set(event.target.dataset.itemNote,event.target.value.slice(0,500));if(event.target.matches("[data-item-model]"))state.itemModels.set(event.target.dataset.itemModel,event.target.value.slice(0,80))});
+    $("#cartContent").addEventListener("keydown",event=>{if(event.key==="Enter"&&event.target.matches("[data-line-price]")){event.preventDefault();event.target.blur()}});
+    $("#clearBtn").addEventListener("click",()=>{if(state.cart.size&&confirm(state.lang==="zh"?"确定清空当前订单吗？":"Clear the current order?")){state.cart.clear();state.itemNotes.clear();state.itemModels.clear();state.priceOverrides.clear();state.manualDiscount={type:"percent",value:0};$("#orderNote").value="";render();setStatus(t("cleared"))}});
+    $("#completeBtn").addEventListener("click",async()=>{
+      if(!state.cart.size||state.busy)return;
+      state.busy=true;
+      $("#loading").classList.remove("hidden");
+      render();
+      const lines=receiptLines();
+      const soldQuantities=new Map(state.cart);
+      const orderNote=$("#orderNote").value.trim().slice(0,1000);
+      const chosenVoucher=selectedVoucher();
+      const clientSubtotal=cartSubtotal();
+      const clientVoucherDiscount=roundMoney(voucherValue(chosenVoucher?.vouchers,clientSubtotal));
+      const clientManualDiscount=manualDiscountValue(clientSubtotal,clientVoucherDiscount);
+      try{
+        const items=[...state.cart].map(([product_id,quantity])=>{const product=state.products.find(entry=>entry.id===product_id);return {product_id,quantity,unit_price:cartUnitPrice(product),note:itemNoteText(product_id)}});
+        const rpcArgs={p_items:items,p_customer_barcode:state.customer?.customer_barcode||null,p_customer_voucher_id:chosenVoucher?.id||null,p_order_note:orderNote,p_manual_discount_type:clientManualDiscount>0?state.manualDiscount.type:null,p_manual_discount_value:clientManualDiscount>0?Number(state.manualDiscount.value)||0:0};
+        const {data,error}=await db.rpc("create_pos_order",rpcArgs).single();
+        if(error)throw error;
+        const serverDiscount=Number(data.discount_amount||0);
+        const receiptVoucherDiscount=Math.min(serverDiscount,clientVoucherDiscount);
+        const receiptManualDiscount=Math.max(0,roundMoney(serverDiscount-receiptVoucherDiscount));
+        state.lastReceipt={orderNumber:data.order_number,createdAt:data.confirmed_at||new Date().toISOString(),subtotal:Number(data.subtotal??data.total),discount:serverDiscount,voucherDiscount:receiptVoucherDiscount,voucherDiscountType:chosenVoucher?.vouchers?.discount_type||"",voucherDiscountValue:Number(chosenVoucher?.vouchers?.discount_value||0),manualDiscount:receiptManualDiscount,manualDiscountType:clientManualDiscount>0?state.manualDiscount.type:"",manualDiscountValue:clientManualDiscount>0?Number(state.manualDiscount.value)||0:0,voucherCode:data.voucher_code||chosenVoucher?.vouchers?.code||"",total:Number(data.total),lines,orderNote,lang:state.lang};
+        renderReceipt();
+        const awardedPoints=Number(data.points_awarded||0);
+        const pointsNote=awardedPoints?" · +"+awardedPoints+" "+t("pointsAwarded"):"";
+        state.cart.clear();
+        state.itemNotes.clear();
+        state.itemModels.clear();
+        state.priceOverrides.clear();
+        state.manualDiscount={type:"percent",value:0};
+        $("#orderNote").value="";
+        state.customer=null;
+        state.customerVouchers=[];
+        state.selectedVoucherId=null;
+        renderCustomerSelection();
+        renderVoucherOptions();
+        applyLocalStockDecrease(soldQuantities);
+        void loadProducts().catch(()=>{});
+        $("#lastOrder").classList.remove("hidden");
+        $("#reprintBtn").classList.remove("hidden");
+        $("#lastOrder").innerHTML=`<strong>${state.lang==="zh"?"订单完成":"Order complete"} ${escapeHtml(data.order_number)}</strong><span>${data.item_count} ${state.lang==="zh"?"件":"items"} · ${money.format(data.total)}${serverDiscount>0?` · ${state.lang==="zh"?"已抵扣":"Discount"} ${money.format(serverDiscount)}`:""} · ${state.lang==="zh"?"库存已更新":"Inventory updated"}${pointsNote}</span>`;
+        setStatus(t("saved"),"success");
+        if($("#autoPrint").checked)setTimeout(printLastReceipt,150);
+      }catch(error){
+        setStatus(error.message||(state.lang==="zh"?"订单提交失败，库存没有扣减":"Order failed; inventory was not changed"),"error");
+        alert(`${state.lang==="zh"?"订单未完成":"Order not completed"}: ${error.message||"Please try again"}`);
+      }finally{
+        state.busy=false;
+        $("#loading").classList.add("hidden");
+        render();
+        $("#scanInput").focus();
+      }
+    });
+    $("#logoutBtn").addEventListener("click",async()=>{if(db)await db.auth.signOut();location.reload()});
+    if(db){
+      db.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"){showRecovery();return}if(event==="SIGNED_OUT"&&!state.busy)showLogin()});
+      db.auth.getSession().then(async({data,error})=>{const recoveryMode=new URLSearchParams(location.search).get("reset")==="password"||location.hash.includes("type=recovery");if(error){showLogin(error);return}if(recoveryMode&&data.session?.user){showRecovery();return}if(data.session?.user){try{await enterApp(data.session.user);return}catch(error){showLogin(openedFromAdmin?t("sessionExpired"):error);return}}showLogin()}).catch(error=>showLogin(error));
+    }else{
+      showLogin(state.lang==="zh"?"商店数据库尚未配置，请先填写 store-config.js。":"Store database is not configured. Add the new project details to store-config.js.");
+      $("#loginForm button[type=submit]").disabled=true;
+      $("#resetPasswordBtn").disabled=true;
+    }
+    applyLanguage();
+  </script>
+</body>
+</html>
