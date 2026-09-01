@@ -1,8 +1,15 @@
 import { readFile, writeFile } from "node:fs/promises";
 
 const sourcePath = new URL("../source-products.raw.json", import.meta.url);
+const translationsPath = new URL("../source-product-translations.json", import.meta.url);
 const outputPath = new URL("../products-data.js", import.meta.url);
 const sourceProducts = JSON.parse(await readFile(sourcePath, "utf8"));
+let translations = { categories: {}, products: {} };
+try {
+  translations = JSON.parse(await readFile(translationsPath, "utf8"));
+} catch (error) {
+  if (error.code !== "ENOENT") throw error;
+}
 
 function extractSku(name, sourceId) {
   const normalizedName = String(name || "").trim();
@@ -25,7 +32,7 @@ const products = sourceProducts.map((source, index) => {
     handle: `kdh-${source.source_id}`,
     title,
     titleZh: title,
-    titleEn: "",
+    titleEn: String(translations.products?.[`kdh-${source.source_id}`] || "").trim(),
     category: String(source.category || "其他").trim(),
     productType: String(source.category || "其他").trim(),
     description: "",
@@ -63,7 +70,11 @@ if (new Set(products.map((product) => product.id)).size !== products.length) thr
 if (duplicateSkus.length) throw new Error(`Duplicate SKUs found: ${duplicateSkus.join(", ")}`);
 if (products.some((product) => !product.title || !product.category || !product.sku)) throw new Error("Required product fields are missing.");
 
-const output = `// Generated from the authenticated source catalogue. Rebuild with scripts/build-source-products.mjs.\nwindow.GOGO_SHOP_PRODUCTS = Object.freeze(${JSON.stringify(products, null, 2)});\n`;
+const categoryTranslations = Object.fromEntries(
+  [...new Set(products.map((product) => product.category))]
+    .map((category) => [category, String(translations.categories?.[category] || category).trim()])
+);
+const output = `// Generated from the authenticated source catalogue. Rebuild with scripts/build-source-products.mjs.\nwindow.GOGO_SHOP_CATEGORY_TRANSLATIONS = Object.freeze(${JSON.stringify(categoryTranslations, null, 2)});\nwindow.GOGO_SHOP_PRODUCTS = Object.freeze(${JSON.stringify(products, null, 2)});\n`;
 await writeFile(outputPath, output, "utf8");
 
 const categories = new Set(products.map((product) => product.category));
@@ -73,5 +84,7 @@ console.log(JSON.stringify({
   published: products.filter((product) => product.published).length,
   soldOut: products.filter((product) => product.stock === 0).length,
   extractedSkus: products.filter((product) => product.sku !== product.sourceId).length,
-  fallbackSkus: products.filter((product) => product.sku === product.sourceId).length
+  fallbackSkus: products.filter((product) => product.sku === product.sourceId).length,
+  translatedProducts: products.filter((product) => product.titleEn).length,
+  translatedCategories: Object.values(categoryTranslations).filter(Boolean).length
 }, null, 2));

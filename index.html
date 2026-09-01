@@ -8682,9 +8682,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="store-config.js"></script>
   <script src="product-localizations.js?v=5"></script>
-  <script src="products-data.js?v=20260901"></script>
+  <script src="products-data.js?v=20260901-3"></script>
   <script>
-    const STORAGE_KEY = "gogoshop_online_products_v1";
+    const STORAGE_KEY = "gogoshop_online_products_v3";
     const CART_KEY = "gogoshop_cart_v1";
     const ORDER_KEY = "gogoshop_orders_v1";
     const DESIGN_KEY = "gogoshop_store_design_v1";
@@ -10096,6 +10096,9 @@
       if (category === "other") return t("otherCategory");
       const storefrontCategory = storefrontCategories.find((item) => item.key === category);
       if (storefrontCategory) return state.lang === "zh" ? storefrontCategory.zh : storefrontCategory.en;
+      if (state.lang !== "zh" && window.GOGO_SHOP_CATEGORY_TRANSLATIONS?.[category]) {
+        return window.GOGO_SHOP_CATEGORY_TRANSLATIONS[category];
+      }
       return state.lang === "zh" ? productLabels[category]?.zh || category : category;
     }
 
