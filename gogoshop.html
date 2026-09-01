@@ -8682,8 +8682,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="store-config.js"></script>
   <script src="product-localizations.js?v=5"></script>
+  <script src="products-data.js?v=20260901"></script>
   <script>
-    const STORAGE_KEY = "gogoshop_products_v1";
+    const STORAGE_KEY = "gogoshop_online_products_v1";
     const CART_KEY = "gogoshop_cart_v1";
     const ORDER_KEY = "gogoshop_orders_v1";
     const DESIGN_KEY = "gogoshop_store_design_v1";
@@ -9093,7 +9094,7 @@
     });
     const storefrontCategoryKeys = new Set(storefrontCategories.map((category) => category.key));
 
-    const seedProducts = [];
+    const seedProducts = Array.isArray(window.GOGO_SHOP_PRODUCTS) ? window.GOGO_SHOP_PRODUCTS : [];
     const productImageSets = {};
 
     const seedOrders = [
@@ -10124,6 +10125,7 @@
     }
 
     function productCategoryKey(product) {
+      if (String(product?.id || "").startsWith("kdh-")) return String(product.category || "other").trim() || "other";
       return storefrontCategoryByProductId.get(product.id)
         || (storefrontCategoryKeys.has(product.category) ? product.category : "")
         || (isOfficeSupplyProduct(product) ? "office-supplies" : "keychains-gifts");
@@ -10275,7 +10277,7 @@
       return Number.isFinite(limit) ? images.slice(0, limit) : images;
     }
 
-    function renderProductGallery(product) {
+    function renderProductGallery(product, prioritize = false) {
       const images = productImages(product, 6);
       const hasGallery = images.length > 1;
       return `
@@ -10283,7 +10285,7 @@
         <a class="media-slider" href="#product=${encodeURIComponent(product.id)}" data-product-view="${escapeHtml(product.id)}" data-gallery="${escapeHtml(product.id)}" data-gallery-index="0" data-gallery-count="${images.length}" style="--active-slide: 0" aria-label="${escapeHtml(productName(product))}">
           <div class="media-track">
             ${images.length ? images.map((image, index) => `
-              <img class="media-slide" src="${escapeHtml(image)}" alt="${escapeHtml(productName(product))} ${index + 1}" loading="${index === 0 ? "eager" : "lazy"}" decoding="async" fetchpriority="${index === 0 ? "high" : "auto"}" draggable="false">
+              <img class="media-slide" src="${escapeHtml(image)}" alt="${escapeHtml(productName(product))} ${index + 1}" loading="${index === 0 && prioritize ? "eager" : "lazy"}" decoding="async" fetchpriority="${index === 0 && prioritize ? "high" : "auto"}" draggable="false">
             `).join("") : `<span class="image-placeholder" role="img" aria-label="${escapeHtml(state.lang === "zh" ? "暂无图片" : "No image")}"><i data-lucide="image-off"></i><span>${state.lang === "zh" ? "暂无图片" : "No image"}</span></span>`}
           </div>
         </a>
@@ -10588,8 +10590,11 @@
       const ordered = storefrontCategories
         .filter((category) => activeCategories.has(category.key))
         .map((category) => category.key);
-      if (activeCategories.has("other")) ordered.push("other");
-      return ["All", ...ordered];
+      const dynamic = [...activeCategories]
+        .filter((category) => category !== "other" && !ordered.includes(category))
+        .sort((a, b) => categoryName(a).localeCompare(categoryName(b), state.lang === "zh" ? "zh-CN" : "en-NZ"));
+      if (activeCategories.has("other")) dynamic.push("other");
+      return ["All", ...ordered, ...dynamic];
     }
 
     function visibleProducts() {
@@ -10663,10 +10668,10 @@
         refreshIcons();
         return;
       }
-      grid.innerHTML = products.map((product) => `
+      grid.innerHTML = products.map((product, index) => `
         <article class="product-card">
           <div class="product-media" role="group" aria-label="${escapeHtml(productName(product))}">
-            ${renderProductGallery(product)}
+            ${renderProductGallery(product, index < 8)}
           </div>
           <div class="product-info">
             <a class="product-summary-link" href="#product=${encodeURIComponent(product.id)}" data-product-view="${escapeHtml(product.id)}">
