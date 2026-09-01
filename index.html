@@ -2134,6 +2134,38 @@
       display: none;
     }
 
+    .delivery-notice-modal[hidden] { display: none; }
+
+    .delivery-notice-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 400;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(20, 24, 24, .58);
+    }
+
+    .delivery-notice-dialog {
+      width: min(440px, 100%);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 24px 80px rgba(20, 24, 24, .3);
+    }
+
+    .delivery-notice-content { display: grid; gap: 18px; padding: 20px 22px 22px; }
+    .delivery-notice-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+    .delivery-notice-list li { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: start; gap: 10px; color: var(--ink); font-size: 14px; line-height: 1.55; }
+    .delivery-notice-list svg { width: 18px; height: 18px; margin-top: 2px; color: var(--accent); }
+    .delivery-notice-content .button { width: 100%; }
+
+    @media (max-width: 520px) {
+      .delivery-notice-modal { padding: 10px; }
+      .delivery-notice-content { padding: 18px 16px 16px; }
+    }
+
     .payment-modal {
       position: fixed;
       inset: 0;
@@ -8626,6 +8658,27 @@
     </div>
   </section>
 
+  <section class="delivery-notice-modal" id="deliveryNoticeModal" data-delivery-notice-backdrop aria-hidden="true" hidden>
+    <div class="delivery-notice-dialog" role="dialog" aria-modal="true" aria-labelledby="deliveryNoticeTitle">
+      <div class="panel-head">
+        <h2 class="panel-title" id="deliveryNoticeTitle" data-i18n="deliveryNoticeTitle">Delivery information</h2>
+        <div class="language-toggle" data-language-toggle aria-label="Language">
+          <button type="button" data-lang="en">EN</button>
+          <button type="button" data-lang="zh">中文</button>
+        </div>
+        <button class="icon-button" type="button" data-close-delivery-notice aria-label="Close"><i data-lucide="x"></i></button>
+      </div>
+      <div class="delivery-notice-content">
+        <ul class="delivery-notice-list">
+          <li><i data-lucide="truck"></i><span data-i18n="deliveryNoticeFree">Free home delivery on orders of NZ$80 or more within 12 km.</span></li>
+          <li><i data-lucide="badge-dollar-sign"></i><span data-i18n="deliveryNoticeFee">A $5 delivery fee applies to orders under NZ$80.</span></li>
+          <li><i data-lucide="map-pin"></i><span data-i18n="deliveryNoticePickup">Outside the delivery area, pickup only.</span></li>
+        </ul>
+        <button class="button" type="button" data-close-delivery-notice data-i18n="deliveryNoticeConfirm">Got it</button>
+      </div>
+    </div>
+  </section>
+
   <section class="payment-modal" id="paymentModal" data-payment-backdrop hidden>
     <div class="payment-dialog" role="dialog" aria-modal="true" aria-labelledby="paymentTitle">
       <div class="panel-head">
@@ -8842,6 +8895,11 @@
         paymentSuccess: "Payment received. Your order is waiting for confirmation.",
         paymentCancelled: "Payment was cancelled.",
         paymentUnavailable: "Online payments are not configured yet.",
+        deliveryNoticeTitle: "Delivery information",
+        deliveryNoticeFree: "Free home delivery on orders of NZ$80 or more within 12 km.",
+        deliveryNoticeFee: "A $5 delivery fee applies to orders under NZ$80.",
+        deliveryNoticePickup: "Outside the delivery area, pickup only.",
+        deliveryNoticeConfirm: "Got it",
         searchTitle: "Search",
         searchPlaceholder: "Search products",
         clear: "Clear",
@@ -8977,6 +9035,11 @@
         paymentSuccess: "付款成功，订单正在等待商家确认。",
         paymentCancelled: "已取消付款。",
         paymentUnavailable: "在线付款尚未完成配置。",
+        deliveryNoticeTitle: "配送说明",
+        deliveryNoticeFree: "满 NZ$80 免费配送到家（12KM 内）。",
+        deliveryNoticeFee: "金额不足 NZ$80 收取 $5 配送费。",
+        deliveryNoticePickup: "超出配送范围仅限自取。",
+        deliveryNoticeConfirm: "知道了",
         searchTitle: "搜索",
         searchPlaceholder: "搜索商品",
         clear: "清除",
@@ -9985,6 +10048,25 @@
       modal.setAttribute("aria-hidden", "true");
       if (openVipRules.lastFocus instanceof HTMLElement) openVipRules.lastFocus.focus();
       openVipRules.lastFocus = null;
+    }
+
+    function openDeliveryNotice() {
+      const modal = $("#deliveryNoticeModal");
+      if (!modal || isAdminRoute()) return;
+      openDeliveryNotice.lastFocus = document.activeElement;
+      modal.hidden = false;
+      modal.setAttribute("aria-hidden", "false");
+      refreshIcons();
+      window.requestAnimationFrame(() => modal.querySelector("[data-close-delivery-notice]")?.focus());
+    }
+
+    function closeDeliveryNotice() {
+      const modal = $("#deliveryNoticeModal");
+      if (!modal || modal.hidden) return;
+      modal.hidden = true;
+      modal.setAttribute("aria-hidden", "true");
+      if (openDeliveryNotice.lastFocus instanceof HTMLElement) openDeliveryNotice.lastFocus.focus();
+      openDeliveryNotice.lastFocus = null;
     }
 
     function calculateSourcePricing(value, currency = "CNY") {
@@ -15086,6 +15168,11 @@
         return;
       }
 
+      if (clickedElement.matches("[data-delivery-notice-backdrop]") || clickedElement.closest("[data-close-delivery-notice]")) {
+        closeDeliveryNotice();
+        return;
+      }
+
       if (clickedElement.matches("[data-customer-detail-backdrop]") || clickedElement.closest("[data-close-customer-detail]")) {
         closeCustomerDetail();
         return;
@@ -15658,6 +15745,11 @@
     });
 
     document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !$("#deliveryNoticeModal").hidden) {
+        event.preventDefault();
+        closeDeliveryNotice();
+        return;
+      }
       if (event.key === "Escape" && !$("#productLabelModal").hidden) {
         event.preventDefault();
         closeProductLabel();
@@ -15755,6 +15847,7 @@
     document.documentElement.lang = state.lang === "zh" ? "zh-CN" : "en";
     applyLanguage();
     renderAll();
+    if (!isAdminRoute()) openDeliveryNotice();
     initNativeOrderNotifications();
     initNativeOAuth();
     initSupabase().then(handlePaymentReturn);
