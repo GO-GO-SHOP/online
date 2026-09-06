@@ -193,7 +193,8 @@ select
   count(*) filter (where id like 'kdh-%') as online_catalogue_products,
   count(*) filter (where id like 'kdh-%' and published) as published_products,
   count(*) filter (where id like 'kdh-%' and nullif(trim(image), '') is not null) as products_with_images,
-  coalesce(sum(stock) filter (where id like 'kdh-%'), 0) as total_stock;
+  coalesce(sum(stock) filter (where id like 'kdh-%'), 0) as total_stock
+from public.products;
 `;
 
 await writeFile(outputPath, sql, "utf8");
