@@ -15,6 +15,10 @@
 
 后台商品媒体库需要额外运行一次 `supabase-product-media.sql`。该脚本会创建 `product_media` 图片索引表、公开读取的 `product-media` Storage 存储桶和管理员写入权限，并把现有商品中的 URL 图片登记到媒体库。
 
+线上商城店铺装修需要额外运行一次 `supabase-storefront-design.sql`。该脚本会创建线上专用的店铺配置，并允许管理员在后台 **Design** 中编辑主题字体、颜色、公告栏、中英文店名、首页横幅和文字/图片模块。访客只读取公开装修配置，管理员保存后会自动同步到所有设备；登录客户的公告栏仍会显示个性化欢迎语。
+
+使用步骤：登录线上商城管理员账户，打开 **Design**，点击左侧的 **Announcement bar**、**Header**、**Image banner** 或 **Featured products**，在右侧修改内容；需要添加文字、图片或按钮时点击 **Add section**。顶部状态显示 **Saved to online store** 后，刷新其他设备即可看到更新。线上版必须在 `store-config.js` 中配置独立线上 Supabase 项目的公开 URL 和 publishable/anon key，不要填入线下 `gogoshop.nz` 项目的密钥。
+
 ## 2. 创建管理员
 
 1. 先通过网站的“我的账户”创建一个邮箱账户。
