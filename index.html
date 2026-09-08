@@ -6914,9 +6914,22 @@
 
     @media (max-width: 760px) {
       .theme-editor {
+        width: 100%;
+        max-width: 100%;
         height: auto;
         min-height: 0;
         overflow: visible;
+      }
+
+      .theme-editor-toolbar,
+      .theme-editor-workspace,
+      .theme-editor-sections,
+      .theme-editor-preview-pane,
+      .theme-editor-inspector,
+      .design-preview {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
       }
 
       .theme-editor-toolbar {
@@ -6937,6 +6950,9 @@
 
       .theme-editor-toolbar-actions .button {
         flex: 1 1 0;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .theme-editor-workspace {
@@ -6980,6 +6996,7 @@
       }
 
       .design-preview {
+        box-sizing: border-box;
         padding: 12px;
       }
     }
@@ -8878,6 +8895,7 @@
       { key: "black", minSpend: 1000, labelKey: "vipBlack" }
     ]);
     const SUPABASE_PROJECT_REF = /^https:\/\/([a-z0-9-]+)\.supabase\.co/i.exec(SUPABASE_URL)?.[1] || "unconfigured";
+    const REMOTE_CATALOG_STATE_KEY = `gogoshop_remote_catalog_state_v1_${SUPABASE_PROJECT_REF}`;
     const SUPABASE_AUTH_STORAGE_KEY = `sb-${SUPABASE_PROJECT_REF}-auth-token`;
     const db = SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY && window.supabase?.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: {
@@ -9259,6 +9277,7 @@
       designRemoteLoaded: false,
       designRemoteStatus: "local",
       designRemoteError: "",
+      remoteCatalogReady: storageGet(REMOTE_CATALOG_STATE_KEY) === "ready",
       category: "All",
       sort: "featured",
       lang: storageGet(LANG_KEY) || "en",
@@ -9310,6 +9329,10 @@
       productReturnHash: "#catalog",
       productReturnScroll: 0
     };
+
+    let designLoadPromise = null;
+    let designSaveTimer = null;
+    let designSaveVersion = 0;
 
     const retiredLegacyProductIds = new Set(["phone-case", "phone-case-1", "phone-case-2", "phone-case-3"]);
     state.products = state.products.filter((product) => !retiredLegacyProductIds.has(product.id));
@@ -11346,8 +11369,26 @@
             .eq("published", true));
         }
       }
-      if (error) return;
+      if (error || !Array.isArray(data)) return;
       const remoteProducts = data.filter((product) => String(product.tags || "").trim() !== PURGED_PRODUCT_TAG);
+      if (!remoteProducts.length && !state.remoteCatalogReady && seedProducts.length) {
+        const localProducts = [...state.products, ...state.deletedProducts];
+        const localById = new Map(localProducts.map((product) => [String(product.id), product]));
+        state.products = seedProducts.map((seed) => ({
+          ...publicProductSnapshot(seed),
+          ...(localById.get(String(seed.id)) || {})
+        }));
+        state.deletedProducts = [];
+        persistProducts();
+        persistDeletedProducts();
+        renderProducts();
+        renderCart();
+        return;
+      }
+      if (remoteProducts.length && !state.remoteCatalogReady) {
+        state.remoteCatalogReady = true;
+        storageSet(REMOTE_CATALOG_STATE_KEY, "ready");
+      }
       if (isAdmin) await syncPhoneFilmAggregateStock(remoteProducts);
       const localProducts = [...state.products, ...state.deletedProducts];
       const remoteProductIds = new Set(remoteProducts.filter((product) => !isAdmin || !product.deleted_at).map((product) => product.id));
