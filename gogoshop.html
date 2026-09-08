@@ -2178,6 +2178,8 @@
 
     .payment-dialog {
       width: min(100%, 480px);
+      max-height: calc(100vh - 36px);
+      max-height: calc(100dvh - 36px);
       overflow: hidden;
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -2188,8 +2190,17 @@
     .payment-body {
       display: grid;
       gap: 18px;
+      max-height: calc(100vh - 98px);
+      max-height: calc(100dvh - 98px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
       padding: 20px 22px 22px;
     }
+
+    .guest-checkout-fields { display: grid; gap: 12px; }
+    .guest-checkout-fields[hidden] { display: none; }
+    .guest-checkout-heading { margin: 0; font-size: 14px; font-weight: 800; }
+    .guest-checkout-fields textarea { min-height: 76px; resize: vertical; }
 
     .payment-total {
       display: flex;
@@ -4691,6 +4702,24 @@
       margin-top: 2px;
       color: var(--muted);
       font-size: 11px;
+    }
+
+    .theme-save-status {
+      color: #5f6868;
+      font-style: normal;
+    }
+
+    .theme-save-status[data-state="saving"],
+    .theme-save-status[data-state="loading"] {
+      color: #9a641d;
+    }
+
+    .theme-save-status[data-state="saved"] {
+      color: #177245;
+    }
+
+    .theme-save-status[data-state="error"] {
+      color: #b3261e;
     }
 
     .theme-editor-devices {
@@ -7882,7 +7911,7 @@
             <div class="theme-editor-toolbar">
               <div class="theme-editor-title">
                 <span class="theme-editor-title-icon"><i data-lucide="paintbrush"></i></span>
-                <div><strong>GO GO SHOP</strong><span>Home page · Saved automatically</span></div>
+                <div><strong>GO GO SHOP</strong><span>Home page · <em class="theme-save-status" id="designSaveStatus" data-state="local">Saved in this browser</em></span></div>
               </div>
               <div class="theme-editor-devices" aria-label="Preview device">
                 <button class="theme-device-button active" type="button" data-design-device="desktop" aria-label="Desktop preview" title="Desktop preview"><i data-lucide="monitor"></i></button>
@@ -7972,8 +8001,12 @@
 
                     <section class="theme-inspector-panel" data-design-panel="announcement" hidden>
                       <label class="field">
-                        <span>Announcement text</span>
-                        <input type="text" name="announcement" placeholder="Welcome to our store">
+                        <span>English announcement</span>
+                        <input type="text" name="announcement" placeholder="Welcome to our store" maxlength="240">
+                      </label>
+                      <label class="field">
+                        <span>Chinese announcement</span>
+                        <input type="text" name="announcementZh" placeholder="欢迎来到我们的商店" maxlength="240">
                       </label>
                       <div class="theme-setting-summary">
                         <div><span>Signed-in customers</span><strong>Hi, customer name</strong></div>
@@ -8691,6 +8724,12 @@
           <div class="payment-total-row discount" data-payment-discount-row hidden><span data-i18n="voucherDiscount">Voucher discount</span><strong data-payment-discount>-$0.00</strong></div>
           <div class="payment-total-row final"><span data-i18n="total">Total</span><strong data-payment-total>$0.00</strong></div>
         </div>
+        <div class="guest-checkout-fields" data-guest-checkout-fields hidden>
+          <p class="guest-checkout-heading" data-i18n="guestCheckoutTitle">Contact and delivery details</p>
+          <label class="field"><span data-i18n="fieldName">Name</span><input type="text" id="guestCheckoutName" autocomplete="name" maxlength="120" required data-i18n-placeholder="placeholderName" placeholder="Your name"></label>
+          <label class="field"><span data-i18n="fieldPhone">Phone</span><input type="tel" id="guestCheckoutPhone" autocomplete="tel" maxlength="40" required data-i18n-placeholder="placeholderPhone" placeholder="Your phone number"></label>
+          <label class="field"><span data-i18n="fieldAddress">Delivery address</span><textarea id="guestCheckoutAddress" autocomplete="street-address" maxlength="500" required data-i18n-placeholder="placeholderAddress" placeholder="Your delivery address"></textarea></label>
+        </div>
         <div>
           <p class="muted" style="margin: 0 0 8px; font-size: 13px; font-weight: 700;" data-i18n="paymentMethods">Payment methods</p>
           <div class="payment-methods">
@@ -8741,6 +8780,7 @@
     const CART_KEY = "gogoshop_cart_v1";
     const ORDER_KEY = "gogoshop_orders_v1";
     const DESIGN_KEY = "gogoshop_store_design_v1";
+    const DESIGN_REMOTE_ID = "online";
     const TRASH_KEY = "gogoshop_product_trash_v1";
     const ADMIN_KEY = "gogoshop_admin_unlocked_v1";
     const LANG_KEY = "gogoshop_lang_v1";
@@ -8856,6 +8896,9 @@
     let nativeOAuthListenersReady = false;
     let nativeOAuthProcessing = false;
     let nativeOAuthBrowserActive = false;
+    let designSaveTimer = null;
+    let designSaveVersion = 0;
+    let designLoadPromise = null;
 
     const translations = {
       en: {
@@ -8895,6 +8938,12 @@
         paymentSuccess: "Payment received. Your order is waiting for confirmation.",
         paymentCancelled: "Payment was cancelled.",
         paymentUnavailable: "Online payments are not configured yet.",
+        guestCheckoutTitle: "Contact and delivery details",
+        fieldPhone: "Phone",
+        fieldAddress: "Delivery address",
+        placeholderPhone: "Your phone number",
+        placeholderAddress: "Your delivery address",
+        guestDetailsRequired: "Enter your name, phone number and delivery address.",
         deliveryNoticeTitle: "Delivery information",
         deliveryNoticeFree: "Free home delivery on orders of NZ$80 or more within 12 km.",
         deliveryNoticeFee: "A $5 delivery fee applies to orders under NZ$80.",
@@ -9035,6 +9084,12 @@
         paymentSuccess: "付款成功，订单正在等待商家确认。",
         paymentCancelled: "已取消付款。",
         paymentUnavailable: "在线付款尚未完成配置。",
+        guestCheckoutTitle: "联系方式和配送地址",
+        fieldPhone: "电话",
+        fieldAddress: "配送地址",
+        placeholderPhone: "请输入联系电话",
+        placeholderAddress: "请输入配送地址",
+        guestDetailsRequired: "请填写姓名、联系电话和配送地址。",
         deliveryNoticeTitle: "配送说明",
         deliveryNoticeFree: "满 NZ$80 免费配送到家（12KM 内）。",
         deliveryNoticeFee: "金额不足 NZ$80 收取 $5 配送费。",
@@ -9179,6 +9234,7 @@
       accentColor: "#111111",
       softColor: "#f7f7f7",
       announcement: "",
+      announcementZh: "",
       headerTitle: "",
       heroTitle: "",
       heroSubtitle: "",
@@ -9200,6 +9256,9 @@
       cart: load(CART_KEY, []),
       orders: load(ORDER_KEY, seedOrders),
       design: load(DESIGN_KEY, seedDesign),
+      designRemoteLoaded: false,
+      designRemoteStatus: "local",
+      designRemoteError: "",
       category: "All",
       sort: "featured",
       lang: storageGet(LANG_KEY) || "en",
@@ -9869,6 +9928,14 @@
 
     function normalizeDesign(value = {}) {
       const design = { ...seedDesign, ...(value || {}) };
+      design.announcement = String(design.announcement || "").trim().slice(0, 240);
+      design.announcementZh = String(design.announcementZh || "").trim().slice(0, 240);
+      design.headerTitle = String(design.headerTitle || "").trim().slice(0, 60);
+      design.heroTitle = String(design.heroTitle || "").trim().slice(0, 120);
+      design.heroSubtitle = String(design.heroSubtitle || "").trim().slice(0, 500);
+      design.heroButton = String(design.heroButton || "").trim().slice(0, 60);
+      design.heroImage = String(design.heroImage || "").trim();
+      design.productTitle = String(design.productTitle || "").trim().slice(0, 80);
       design.baseFontSize = clampNumber(design.baseFontSize, 13, 19, seedDesign.baseFontSize);
       design.headingScale = clampNumber(design.headingScale, 0.85, 1.25, seedDesign.headingScale);
       design.heroHeight = clampNumber(design.heroHeight, 280, 560, seedDesign.heroHeight);
@@ -9956,9 +10023,162 @@
       save(CART_KEY, state.cart);
     }
 
-    function persistDesign() {
+    function designStatusText(status) {
+      const chinese = state.lang === "zh";
+      const labels = chinese
+        ? {
+          loading: "正在读取线上装修...",
+          saving: "正在同步线上...",
+          saved: "已同步到线上商店",
+          local: "仅保存在本浏览器",
+          error: "线上同步失败，请运行装修迁移"
+        }
+        : {
+          loading: "Loading online design...",
+          saving: "Saving online...",
+          saved: "Saved to online store",
+          local: "Saved in this browser",
+          error: "Online sync unavailable - run the design migration"
+        };
+      return labels[status] || labels.local;
+    }
+
+    function setDesignRemoteStatus(status, errorMessage = "") {
+      const allowed = new Set(["loading", "saving", "saved", "local", "error"]);
+      const nextStatus = allowed.has(status) ? status : "local";
+      state.designRemoteStatus = nextStatus;
+      state.designRemoteError = String(errorMessage || "");
+      const statusNode = $("#designSaveStatus");
+      if (!statusNode) return;
+      statusNode.dataset.state = nextStatus;
+      statusNode.textContent = designStatusText(nextStatus);
+      statusNode.title = state.designRemoteError || "";
+    }
+
+    function designHasCustomValues(value) {
+      const current = normalizeDesign(value);
+      const defaults = normalizeDesign(seedDesign);
+      return Object.keys(defaults).some((key) => {
+        if (key === "blocks") return current.blocks.length > 0;
+        return JSON.stringify(current[key]) !== JSON.stringify(defaults[key]);
+      });
+    }
+
+    function designObjectFromRemote(value) {
+      if (value && typeof value === "object" && !Array.isArray(value)) return value;
+      if (typeof value === "string") {
+        try {
+          const parsed = JSON.parse(value);
+          return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+        } catch (error) {}
+      }
+      return {};
+    }
+
+    async function fetchRemoteStorefrontDesign() {
+      let result = await db.rpc("get_storefront_design");
+      if (result.error && /function|schema cache|does not exist/i.test(result.error.message || "")) {
+        const fallback = await db.from("storefront_settings")
+          .select("design")
+          .eq("id", DESIGN_REMOTE_ID)
+          .maybeSingle();
+        if (!fallback.error) return { data: fallback.data?.design || {}, error: null };
+      }
+      return result;
+    }
+
+    async function loadStorefrontDesign(force = false) {
+      if (!db) {
+        setDesignRemoteStatus("local");
+        return false;
+      }
+      if (!force && state.designRemoteLoaded) return true;
+      if (designLoadPromise && !force) return designLoadPromise;
+      designLoadPromise = (async () => {
+        setDesignRemoteStatus("loading");
+        const { data, error } = await fetchRemoteStorefrontDesign();
+        if (error) {
+          state.designRemoteLoaded = false;
+          setDesignRemoteStatus("error", error.message || "Unable to load storefront design");
+          console.warn("Unable to load online storefront design", error);
+          return false;
+        }
+
+        const remoteDesign = designObjectFromRemote(data);
+        if (Object.keys(remoteDesign).length) {
+          state.design = normalizeDesign(remoteDesign);
+          save(DESIGN_KEY, state.design);
+          setDesignRemoteStatus("saved");
+        } else if (state.profile?.is_admin && designHasCustomValues(state.design)) {
+          // Preserve an existing local draft once, then make it the shared online version.
+          persistDesign();
+        } else {
+          state.design = normalizeDesign(seedDesign);
+          save(DESIGN_KEY, state.design);
+          setDesignRemoteStatus("local");
+        }
+        state.designRemoteLoaded = true;
+        applyStoreDesign();
+        if (!$("#adminShell")?.hidden) renderAdminDesign();
+        return true;
+      })().catch((error) => {
+        state.designRemoteLoaded = false;
+        setDesignRemoteStatus("error", error?.message || "Unable to load storefront design");
+        console.warn("Unable to load online storefront design", error);
+        return false;
+      }).finally(() => {
+        designLoadPromise = null;
+      });
+      return designLoadPromise;
+    }
+
+    function queueDesignRemoteSave() {
+      if (!db || !state.profile?.is_admin) {
+        setDesignRemoteStatus("local");
+        return;
+      }
+      designSaveVersion += 1;
+      const version = designSaveVersion;
+      window.clearTimeout(designSaveTimer);
+      setDesignRemoteStatus("saving");
+      designSaveTimer = window.setTimeout(() => {
+        designSaveTimer = null;
+        void saveStorefrontDesign(version);
+      }, 700);
+    }
+
+    async function saveStorefrontDesign(version) {
+      if (!db || !state.profile?.is_admin) return;
+      const design = normalizeDesign(state.design);
+      let result = await db.rpc("save_storefront_design", { p_design: design });
+      if (result.error && /function|schema cache|does not exist/i.test(result.error.message || "")) {
+        result = await db.from("storefront_settings").upsert({
+          id: DESIGN_REMOTE_ID,
+          design,
+          updated_at: new Date().toISOString(),
+          updated_by: state.session?.user?.id || null
+        }, { onConflict: "id" }).select("design").single();
+      }
+      if (version !== designSaveVersion || !state.profile?.is_admin) return;
+      if (result.error) {
+        setDesignRemoteStatus("error", result.error.message || "Unable to save storefront design");
+        console.warn("Unable to save online storefront design", result.error);
+        return;
+      }
+      state.designRemoteLoaded = true;
+      setDesignRemoteStatus("saved");
+    }
+
+    function cancelDesignRemoteSave() {
+      window.clearTimeout(designSaveTimer);
+      designSaveTimer = null;
+      designSaveVersion += 1;
+    }
+
+    function persistDesign(options = {}) {
       state.design = normalizeDesign(state.design);
       save(DESIGN_KEY, state.design);
+      if (options.remote !== false) queueDesignRemoteSave();
     }
 
     function persistOrders() {
@@ -10228,11 +10448,18 @@
       return name ? `Hi, ${name}` : t("announcement");
     }
 
-    function effectiveDesign() {
+    function storefrontAnnouncementText(design) {
+      if (state.lang === "zh") return design.announcementZh || design.announcement || t("announcement");
+      return design.announcement || t("announcement");
+    }
+
+    function effectiveDesign(options = {}) {
       const design = normalizeDesign(state.design);
       return {
         ...design,
-        announcementText: state.session?.user ? customerWelcomeText() : (design.announcement || t("announcement")),
+        announcementText: !options.preview && state.session?.user
+          ? customerWelcomeText()
+          : storefrontAnnouncementText(design),
         headerTitleText: design.headerTitle || "GO GO SHOP",
         heroTitleText: design.heroTitle || t("heroTitle"),
         heroButtonText: design.heroButton || t("shopAll"),
@@ -10638,6 +10865,7 @@
       storageSet(LANG_KEY, state.lang);
       document.documentElement.lang = state.lang === "zh" ? "zh-CN" : "en";
       applyLanguage();
+      setDesignRemoteStatus(state.designRemoteStatus);
       renderAll();
     }
 
@@ -11658,6 +11886,7 @@
     }
 
     async function handleAuthSession(session) {
+      if (!session?.user) cancelDesignRemoteSave();
       state.session = session;
       renderAccount();
       if (session?.user && hasPendingOAuth()) {
@@ -11666,6 +11895,7 @@
         openPanel("account");
       }
       await loadCustomerData();
+      await loadStorefrontDesign();
       if (state.profile?.is_admin) {
         await loadStoreInventory();
         await subscribeToAdminOrderRealtime();
@@ -11694,6 +11924,14 @@
       db.auth.onAuthStateChange((_event, session) => {
         window.setTimeout(() => handleAuthSession(session), 0);
       });
+      if (!state.profile?.is_admin) {
+        window.setInterval(() => {
+          if (!document.hidden && !state.profile?.is_admin) void loadStoreInventory();
+        }, 30000);
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden && !state.profile?.is_admin) void loadStoreInventory();
+        });
+      }
     }
 
     async function submitCustomerAuth(form, action) {
@@ -11882,9 +12120,8 @@
         showToast(t("cartEmpty"));
         return;
       }
-      if (!db || !state.session?.user) {
-        openPanel("account");
-        showToast(t("loginToCheckout"));
+      if (!db) {
+        showToast(t("backendNotReady"));
         return;
       }
       if (state.selectedCustomerVoucherId && !await refreshVoucherQuote()) {
@@ -11899,8 +12136,24 @@
       $("[data-payment-discount-row]").hidden = discount <= 0;
       $("[data-payment-total]").textContent = formatPrice(Math.max(0, subtotal - discount));
       $("#paymentMessage").textContent = "";
+      $("[data-guest-checkout-fields]").hidden = Boolean(state.session?.user);
       $("#paymentModal").hidden = false;
       refreshIcons();
+    }
+
+    function guestCheckoutDetails() {
+      if (state.session?.user) return null;
+      const fields = [$("#guestCheckoutName"), $("#guestCheckoutPhone"), $("#guestCheckoutAddress")];
+      const invalid = fields.find((field) => !field?.checkValidity());
+      if (invalid) {
+        invalid.reportValidity();
+        return false;
+      }
+      return {
+        name: fields[0].value.trim(),
+        phone: fields[1].value.trim(),
+        address: fields[2].value.trim()
+      };
     }
 
     function closePaymentModal() {
@@ -11919,11 +12172,10 @@
 
       const { data: sessionData } = await db.auth.getSession();
       const accessToken = sessionData.session?.access_token;
-      if (!accessToken) {
+      const guest = guestCheckoutDetails();
+      if (guest === false) {
         button.disabled = false;
-        closePaymentModal();
-        openPanel("account");
-        showToast(t("loginToCheckout"));
+        message.textContent = t("guestDetailsRequired");
         return;
       }
 
@@ -11931,13 +12183,14 @@
         const response = await fetch(SUPABASE_URL + "/functions/v1/create-checkout-session", {
           method: "POST",
           headers: {
-            "Authorization": "Bearer " + accessToken,
+            "Authorization": "Bearer " + (accessToken || SUPABASE_PUBLISHABLE_KEY),
             "apikey": SUPABASE_PUBLISHABLE_KEY,
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
             items: state.cart.map((line) => ({ product_id: line.id, quantity: line.quantity })),
             customer_voucher_id: state.selectedCustomerVoucherId || null,
+            guest,
             locale: state.lang
           })
         });
@@ -11960,9 +12213,11 @@
       const paymentResult = url.searchParams.get("payment");
       if (!paymentResult) return;
       const cancelledOrderId = url.searchParams.get("order_id");
+      const cancelToken = url.searchParams.get("cancel_token");
       url.searchParams.delete("payment");
       url.searchParams.delete("session_id");
       url.searchParams.delete("order_id");
+      url.searchParams.delete("cancel_token");
       history.replaceState(null, "", url.pathname + url.search + url.hash);
 
       if (paymentResult === "success") {
@@ -11978,22 +12233,20 @@
         return;
       }
 
-      if (cancelledOrderId && db && state.session?.user) {
+      if (cancelledOrderId && db) {
         try {
           const { data: sessionData } = await db.auth.getSession();
           const accessToken = sessionData.session?.access_token;
-          if (accessToken) {
-            await fetch(SUPABASE_URL + "/functions/v1/create-checkout-session", {
-              method: "POST",
-              headers: {
-                "Authorization": "Bearer " + accessToken,
-                "apikey": SUPABASE_PUBLISHABLE_KEY,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ action: "cancel", order_id: cancelledOrderId })
-            });
-            await loadCustomerData();
-          }
+          await fetch(SUPABASE_URL + "/functions/v1/create-checkout-session", {
+            method: "POST",
+            headers: {
+              "Authorization": "Bearer " + (accessToken || SUPABASE_PUBLISHABLE_KEY),
+              "apikey": SUPABASE_PUBLISHABLE_KEY,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ action: "cancel", order_id: cancelledOrderId, cancel_token: cancelToken })
+          });
+          if (accessToken) await loadCustomerData();
         } catch (error) {}
       }
       openPanel("cart");
@@ -12194,6 +12447,7 @@
     async function logoutAdmin() {
       closeProductEditor();
       closeCustomerDetail();
+      cancelDesignRemoteSave();
       clearAdminAccess();
       await stopAdminOrderRealtime();
       if (db) await db.auth.signOut();
@@ -12242,8 +12496,8 @@
       const customerPromise = db.from("profiles").select("id,email,full_name,points,total_spent,created_at,updated_at,is_admin").order("created_at", { ascending: false });
       const voucherPromise = db.from("vouchers").select("*").order("created_at", { ascending: false });
       const voucherAssignmentPromise = db.from("customer_vouchers").select("id,voucher_id,user_id,source,redeemed_at,reserved_at,used_at,order_id,vouchers(code,name,active,starts_at,expires_at),profiles!customer_vouchers_user_id_fkey(email,full_name)").order("redeemed_at", { ascending: false });
-      const voucherPaymentFields = "id,order_number,user_id,status,order_note,subtotal,discount_amount,voucher_code,total,item_count,points_awarded,payment_provider,payment_status,paid_at,created_at,confirmed_at,deleted_at,deleted_by,profiles!orders_user_id_fkey(email,full_name,customer_barcode,is_admin),order_items(product_id,product_title,quantity,unit_price,item_note)";
-      const voucherPaymentFieldsWithoutRecycle = "id,order_number,user_id,status,order_note,subtotal,discount_amount,voucher_code,total,item_count,points_awarded,payment_provider,payment_status,paid_at,created_at,confirmed_at,profiles!orders_user_id_fkey(email,full_name,customer_barcode,is_admin),order_items(product_id,product_title,quantity,unit_price,item_note)";
+      const voucherPaymentFields = "id,order_number,user_id,status,order_note,subtotal,discount_amount,voucher_code,total,item_count,points_awarded,payment_provider,payment_status,paid_at,created_at,confirmed_at,deleted_at,deleted_by,guest_name,guest_phone,guest_address,profiles!orders_user_id_fkey(email,full_name,customer_barcode,is_admin),order_items(product_id,product_title,quantity,unit_price,item_note)";
+      const voucherPaymentFieldsWithoutRecycle = "id,order_number,user_id,status,order_note,subtotal,discount_amount,voucher_code,total,item_count,points_awarded,payment_provider,payment_status,paid_at,created_at,confirmed_at,guest_name,guest_phone,guest_address,profiles!orders_user_id_fkey(email,full_name,customer_barcode,is_admin),order_items(product_id,product_title,quantity,unit_price,item_note)";
       const paymentFields = "id,order_number,user_id,status,total,item_count,points_awarded,payment_provider,payment_status,paid_at,created_at,confirmed_at,deleted_at,deleted_by,profiles!orders_user_id_fkey(email,full_name),order_items(product_id,product_title,quantity,unit_price)";
       const paymentFieldsWithoutRecycle = "id,order_number,user_id,status,total,item_count,points_awarded,payment_provider,payment_status,paid_at,created_at,confirmed_at,profiles!orders_user_id_fkey(email,full_name),order_items(product_id,product_title,quantity,unit_price)";
       const basicFields = "id,order_number,user_id,status,total,item_count,points_awarded,created_at,confirmed_at,deleted_at,deleted_by,profiles!orders_user_id_fkey(email,full_name),order_items(product_id,product_title,quantity,unit_price)";
@@ -12254,7 +12508,7 @@
         state.orderRecycleSupported = false;
         ordersResult = await db.from("orders").select(voucherPaymentFieldsWithoutRecycle).order("created_at", { ascending: false });
       }
-      if (ordersResult.error && /subtotal|discount_amount|voucher_code|order_note|item_note/i.test(ordersResult.error.message || "")) {
+      if (ordersResult.error && /subtotal|discount_amount|voucher_code|order_note|item_note|guest_name|guest_phone|guest_address/i.test(ordersResult.error.message || "")) {
         const fields = state.orderRecycleSupported ? paymentFields : paymentFieldsWithoutRecycle;
         ordersResult = await db.from("orders").select(fields).order("created_at", { ascending: false });
       }
@@ -12331,6 +12585,12 @@
       trashPanel.hidden = !state.orderTrashOpen;
       target.innerHTML = state.adminOrders.length ? state.adminOrders.map((order) => {
         const customer = order.profiles || {};
+        const guestCustomer = !order.user_id && order.guest_name;
+        const customerCell = guestCustomer
+          ? `<strong>${escapeHtml(order.guest_name)}</strong><div class="muted">${escapeHtml(order.guest_phone || "")}</div><div class="muted">${escapeHtml(order.guest_address || "")}</div>`
+          : (order.order_number?.startsWith("POS-") && order.user_id === state.session?.user?.id
+              ? '<strong>到店顾客</strong><div class="muted">线下扫码</div>'
+              : `${escapeHtml(customer.full_name || customer.email || "Customer")}<div class="muted">${escapeHtml(customer.email || "")}</div>`);
         const canEdit = order.status === "pending" && order.payment_provider !== "stripe";
         const canConfirm = order.status === "pending"
           && (order.payment_provider !== "stripe" || order.payment_status === "paid");
@@ -12344,7 +12604,7 @@
         return `
           <tr data-admin-order-row="${escapeHtml(order.id)}">
             <td><strong>${escapeHtml(order.order_number)}</strong><div class="muted">${new Date(order.created_at).toLocaleString("en-NZ")}</div></td>
-            <td>${order.order_number?.startsWith("POS-") && order.user_id === state.session?.user?.id ? '<strong>到店顾客</strong><div class="muted">线下扫码</div>' : `${escapeHtml(customer.full_name || customer.email || "Customer")}<div class="muted">${escapeHtml(customer.email || "")}</div>`}</td>
+            <td>${customerCell}</td>
             <td>${formatPrice(order.total)}<div class="muted">${Number(order.item_count)} items${Number(order.discount_amount || 0) > 0 ? ` · ${escapeHtml(order.voucher_code || (String(order.order_number || "").startsWith("POS-") ? "POS Discount" : "Discount"))} -${formatPrice(order.discount_amount)}` : ""}</div></td>
             <td>
               <div class="order-statuses" style="justify-content: flex-start;">
@@ -12398,9 +12658,11 @@
           : "";
       const gstAmount = Math.round(total * 15 / 115 * 100) / 100;
       const customer = order.profiles || {};
-      const hasCustomer = !String(order.order_number || "").startsWith("POS-") || (customer.is_admin !== true && order.user_id !== state.session?.user?.id);
-      const customerName = customer.full_name || customer.email || (isChinese ? "客户" : "Customer");
-      const customerBlock = hasCustomer ? `<span>${isChinese ? "客户" : "Customer"}: ${escapeHtml(customerName)}</span>${customer.email ? `<span>${isChinese ? "邮箱" : "Email"}: ${escapeHtml(customer.email)}</span>` : ""}${customer.customer_barcode ? `<span>${isChinese ? "客户号" : "Customer ID"}: ${escapeHtml(customer.customer_barcode)}</span>` : ""}<span>${isChinese ? "本次积分" : "Points Earned"}: +${Number(order.points_awarded || 0)}</span>` : "";
+      const isGuest = !order.user_id && order.guest_name;
+      const hasCustomer = isGuest || !String(order.order_number || "").startsWith("POS-") || (customer.is_admin !== true && order.user_id !== state.session?.user?.id);
+      const customerName = isGuest ? order.guest_name : (customer.full_name || customer.email || (isChinese ? "客户" : "Customer"));
+      const guestDetails = isGuest ? `<span>${isChinese ? "电话" : "Phone"}: ${escapeHtml(order.guest_phone || "")}</span><span>${isChinese ? "地址" : "Address"}: ${escapeHtml(order.guest_address || "")}</span>` : "";
+      const customerBlock = hasCustomer ? `<span>${isChinese ? "客户" : "Customer"}: ${escapeHtml(customerName)}</span>${guestDetails}${customer.email ? `<span>${isChinese ? "邮箱" : "Email"}: ${escapeHtml(customer.email)}</span>` : ""}${customer.customer_barcode ? `<span>${isChinese ? "客户号" : "Customer ID"}: ${escapeHtml(customer.customer_barcode)}</span>` : ""}${isGuest ? "" : `<span>${isChinese ? "本次积分" : "Points Earned"}: +${Number(order.points_awarded || 0)}</span>`}` : "";
       const itemLines = items.map((item) => {
         const quantity = Number(item.quantity || 0);
         const unitPrice = Number(item.unit_price || 0);
@@ -13728,6 +13990,7 @@
         accentColor: data.accentColor,
         softColor: data.softColor,
         announcement: data.announcement.trim(),
+        announcementZh: data.announcementZh.trim(),
         headerTitle: data.headerTitle.trim(),
         heroTitle: data.heroTitle.trim(),
         heroSubtitle: data.heroSubtitle.trim(),
@@ -13747,7 +14010,7 @@
     function renderDesignPreview() {
       const preview = $("#designPreview");
       if (!preview) return;
-      const design = effectiveDesign();
+      const design = effectiveDesign({ preview: true });
       const heroBackground = design.heroImage ? `url("${escapeHtml(design.heroImage)}")` : "linear-gradient(135deg, #4d9298, #d88a76)";
       const previewProducts = state.products
         .filter((product) => product.published)
@@ -13885,6 +14148,7 @@
 
     function renderAdminDesign() {
       if (!$("#designPreview")) return;
+      setDesignRemoteStatus(state.designRemoteStatus, state.designRemoteError);
       syncDesignForm();
       renderDesignBlocks();
       renderDesignInspector();
