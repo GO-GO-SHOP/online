@@ -8813,6 +8813,8 @@
     const PRODUCT_MEDIA_BUCKET = "product-media";
     const PRODUCT_IMAGE_FALLBACK = "./assets/product-image-placeholder.svg?imgv=images-v2";
     const PRODUCT_IMAGE_ASSET_VERSION = "images-v2";
+    // Bump this on every catalog refresh so an updated image at the same URL is fetched.
+    let productImageRefreshVersion = Date.now().toString();
     const STORE_CONFIG = window.GOGO_SHOP_CONFIG || {};
     const SUPABASE_URL = String(STORE_CONFIG.supabaseUrl || "").trim();
     const SUPABASE_PUBLISHABLE_KEY = String(STORE_CONFIG.supabasePublishableKey || "").trim();
@@ -10581,8 +10583,9 @@
       if (!source) return "";
       const isLocalAsset = /^(?:\.\/|\/)?assets\//i.test(source)
         || /(^|:\/\/)(?:www\.)?gogoshop\.nz\/assets\//i.test(source);
-      if (!isLocalAsset || /(?:^|[?&])imgv=/i.test(source)) return source;
-      return `${source}${source.includes("?") ? "&" : "?"}imgv=${PRODUCT_IMAGE_ASSET_VERSION}`;
+      if (/(?:^|[?&])imgv=/i.test(source)) return source;
+      if (isLocalAsset) return `${source}${source.includes("?") ? "&" : "?"}imgv=${PRODUCT_IMAGE_ASSET_VERSION}`;
+      return `${source}${source.includes("?") ? "&" : "?"}imgv=${productImageRefreshVersion}`;
     }
 
     function setImageSource(image, source) {
@@ -11348,6 +11351,7 @@
 
     async function loadStoreInventory() {
       if (!db) return;
+      productImageRefreshVersion = Date.now().toString();
       const isAdmin = state.profile?.is_admin === true;
       let supportsRecycleBin = isAdmin;
       let data;
