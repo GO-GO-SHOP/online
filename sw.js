@@ -1,23 +1,22 @@
-const ADMIN_FALLBACK_URL = new URL("./#admin", self.registration.scope).href;
-
 self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
-});
-
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-  const targetUrl = event.notification.data?.url || ADMIN_FALLBACK_URL;
   event.waitUntil((async () => {
+    await self.registration.unregister();
     const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    const existingWindow = windows.find((client) => new URL(client.url).origin === self.location.origin);
-    if (existingWindow) {
-      if ("navigate" in existingWindow) await existingWindow.navigate(targetUrl);
-      return existingWindow.focus();
-    }
-    return self.clients.openWindow(targetUrl);
+    await Promise.all(windows.map(async (client) => {
+      const source = new URL(client.url);
+      const target = new URL("https://gogoshop.nz/");
+      if (source.pathname.toLowerCase().endsWith("/pos.html")) target.pathname = "/pos.html";
+      target.search = source.search;
+      target.hash = source.pathname.toLowerCase().endsWith("/gogoshop-admin.html") && !source.hash
+        ? "#admin"
+        : source.hash;
+      try {
+        await client.navigate(target.href);
+      } catch (error) {}
+    }));
   })());
 });
